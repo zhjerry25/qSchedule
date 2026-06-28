@@ -4,9 +4,9 @@
   "description": "个人时间规划工具 — Todo 清单与甘特图",
   "main": "./out/main/index.js",
   "scripts": {
-    "dev": "ELECTRON_RUN_AS_NODE= electron-vite dev",
-    "build": "ELECTRON_RUN_AS_NODE= electron-vite build",
-    "preview": "ELECTRON_RUN_AS_NODE= electron-vite preview",
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "typecheck": "npm run typecheck:node && npm run typecheck:web"
@@ -28,7 +28,7 @@
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
-    "electron": "^42.5.0",
+    "electron": "^28.0.0",
     "electron-builder": "^26.15.3",
     "electron-vite": "^4.0.1",
     "postcss": "^8.4.49",

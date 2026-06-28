@@ -161,8 +161,10 @@ export const taskRepository = {
 
     if (filter.view === 'today') {
       const today = new Date().toISOString().slice(0, 10)
-      conditions.push('scheduled_date = ?')
+      // Include tasks scheduled for today AND daily tasks (always due today)
+      conditions.push('(scheduled_date = ? OR frequency = ?)')
       params.push(today)
+      params.push('daily')
     } else if (filter.view === 'week') {
       const now = new Date()
       const dayOfWeek = now.getDay()
@@ -170,9 +172,13 @@ export const taskRepository = {
       monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7))
       const sunday = new Date(monday)
       sunday.setDate(monday.getDate() + 6)
-      conditions.push('scheduled_date >= ? AND scheduled_date <= ?')
+      // Include once/deadline tasks scheduled this week AND weekly tasks
+      conditions.push(
+        '((scheduled_date >= ? AND scheduled_date <= ?) OR frequency = ?)',
+      )
       params.push(monday.toISOString().slice(0, 10))
       params.push(sunday.toISOString().slice(0, 10))
+      params.push('weekly')
     }
 
     if (filter.tagIds && filter.tagIds.length > 0) {
@@ -309,8 +315,9 @@ export const taskRepository = {
         .get(id) as TaskRow | undefined
       if (!row) throw new Error(`Task not found: ${id}`)
 
-      // Single completion lock: once tasks cannot be re-checked
-      if (row.frequency === 'once' && row.completed === 1) {
+      // Single completion lock: any completed task cannot be re-completed
+      // Daily/weekly tasks are unlocked by dynamic reset in the next cycle
+      if (row.completed === 1) {
         throw new Error('This task has already been completed')
       }
 

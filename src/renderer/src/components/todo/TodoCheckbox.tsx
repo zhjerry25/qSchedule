@@ -14,8 +14,9 @@ export function TodoCheckbox({
   onChange,
   disabled = false,
 }: TodoCheckboxProps) {
-  // Once tasks that are completed cannot be unchecked (single-completion lock)
-  const isLocked = checked && frequency === 'once'
+  // Completed tasks cannot be unchecked (single-completion lock)
+  // Daily/weekly tasks are unlocked by dynamic reset in the next cycle
+  const isLocked = checked
   const isDisabled = disabled || isLocked
 
   return (

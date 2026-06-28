@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { taskApi } from '../lib/ipc'
 import { todayISO, isToday, isThisWeek } from '../lib/date-utils'
-import type { View } from '../lib/constants'
 import type { TaskWithTags } from '@shared/task'
 
 // ── Dynamic Reset Transform ──
@@ -28,13 +27,12 @@ function applyDynamicReset(tasks: TaskWithTags[]): TaskWithTags[] {
 
 // ── useTasks ──
 
-export function useTasks(view: View, tagIds: string[]) {
+export function useTasks(tagIds: string[]) {
   const result = useQuery({
-    queryKey: ['tasks', view, tagIds],
+    queryKey: ['tasks', 'all', tagIds],
     queryFn: () =>
       taskApi.list({
         kind: 'todo',
-        view,
         tagIds: tagIds.length > 0 ? tagIds : undefined,
       }),
     select: applyDynamicReset,
@@ -58,8 +56,26 @@ export function useTaskCounts() {
       const today = todayISO()
       const reset = applyDynamicReset(tasks)
 
-      const todayCount = reset.filter((t) => t.scheduled_date === today).length
-      const weekCount = reset.filter((t) => isThisWeek(t.scheduled_date)).length
+      // Today: daily tasks + once/deadline tasks due today or overdue
+      const todayCount = reset.filter((t) => {
+        if (t.frequency === 'daily') return true
+        if (t.frequency === 'weekly') return false
+        // once / deadline: scheduled_date today or in the past (overdue)
+        const refDate = t.scheduled_date ?? t.deadline
+        if (refDate) return refDate <= today
+        return false
+      }).length
+
+      // Week: weekly tasks + once/deadline tasks due later this week (after today)
+      const weekCount = reset.filter((t) => {
+        if (t.frequency === 'weekly') return true
+        if (t.frequency === 'daily') return false // already counted in Today
+        // once / deadline: scheduled_date this week, but after today
+        const refDate = t.scheduled_date ?? t.deadline
+        if (refDate && refDate > today && isThisWeek(refDate)) return true
+        return false
+      }).length
+
       const allCount = reset.length
 
       return { today: todayCount, week: weekCount, all: allCount }

@@ -50,3 +50,26 @@ export const FREQUENCY_COLORS: Record<
 
 export const SIDEBAR_WIDTH = 'w-[280px]'
 export const CONTENT_MAX_WIDTH = 'max-w-2xl'
+
+// ── CardStream Sections ──
+
+export const SECTIONS = ['today', 'week', 'later'] as const
+export type SectionKey = (typeof SECTIONS)[number]
+
+export const SECTION_LABELS: Record<SectionKey, string> = {
+  today: 'Today',
+  week: 'This Week',
+  later: 'Later',
+}
+
+export const SECTION_EMPTY_TITLES: Record<SectionKey, string> = {
+  today: 'No tasks for today',
+  week: 'No tasks this week',
+  later: 'No upcoming tasks',
+}
+
+export const SECTION_EMPTY_DESCRIPTIONS: Record<SectionKey, string> = {
+  today: 'Everything is clear for today',
+  week: 'Your week is open',
+  later: 'Nothing planned ahead',
+}
