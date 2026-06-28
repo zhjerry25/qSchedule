@@ -21,6 +21,7 @@ interface TaskRow {
   deadline: string | null
   start_date: string | null
   end_date: string | null
+  milestone_date: string | null
   is_milestone: number
   completed: number
   completed_at: string | null
@@ -69,6 +70,7 @@ function rowToTask(row: TaskRow): Task {
     deadline: row.deadline,
     start_date: row.start_date,
     end_date: row.end_date,
+    milestone_date: row.milestone_date,
     is_milestone: row.is_milestone === 1,
     completed: row.completed === 1,
     completed_at: row.completed_at,
@@ -94,6 +96,7 @@ function taskToRow(
   if ('deadline' in input) row.deadline = input.deadline ?? null
   if ('start_date' in input) row.start_date = input.start_date ?? null
   if ('end_date' in input) row.end_date = input.end_date ?? null
+  if ('milestone_date' in input) row.milestone_date = input.milestone_date ?? null
   if ('is_milestone' in input && input.is_milestone !== undefined) {
     row.is_milestone = input.is_milestone ? 1 : 0
   }
@@ -242,13 +245,13 @@ export const taskRepository = {
       `INSERT INTO tasks (
         id, title, description, kind, frequency,
         scheduled_date, deadline, start_date, end_date,
-        is_milestone, completed, completed_at, counter,
+        milestone_date, is_milestone, completed, completed_at, counter,
         parent_id, gantt_id, sort_order,
         created_at, updated_at
       ) VALUES (
         ?, ?, ?, ?, ?,
         ?, ?, ?, ?,
-        ?, 0, NULL, 0,
+        ?, ?, 0, NULL, 0,
         ?, ?, 0,
         ?, ?
       )`,
@@ -262,6 +265,7 @@ export const taskRepository = {
       input.deadline ?? null,
       input.start_date ?? null,
       input.end_date ?? null,
+      input.milestone_date ?? null,
       input.is_milestone ? 1 : 0,
       input.parent_id ?? null,
       input.gantt_id ?? null,

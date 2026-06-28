@@ -3,6 +3,7 @@ import { GanttToolbar } from './GanttToolbar'
 import { GanttTimeline } from './GanttTimeline'
 import type { GanttZoom } from '../../hooks/useGanttLayout'
 import type { TaskWithTags } from '@shared/task'
+import { startOfDay, addDays } from '../../lib/date-utils'
 
 interface GanttPanelProps {
   tasks: TaskWithTags[]
@@ -13,18 +14,6 @@ interface GanttPanelProps {
   onCreateDependency: (childId: string, parentId: string) => void
 }
 
-function todayStart(): Date {
-  const d = new Date()
-  d.setHours(0, 0, 0, 0)
-  return d
-}
-
-function addDays(d: Date, n: number): Date {
-  const c = new Date(d)
-  c.setDate(c.getDate() + n)
-  return c
-}
-
 function formatRange(start: Date, end: Date): string {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   const s = `${months[start.getMonth()]} ${start.getDate()}`
@@ -33,18 +22,19 @@ function formatRange(start: Date, end: Date): string {
 }
 
 const ZOOM_SPAN: Record<GanttZoom, number> = {
-  day: 14,
-  week: 8 * 7, // 8 weeks
-  month: 6 * 30, // ~6 months
+  day:   60,   // ~2 months → SVG ≈ 5,760px
+  week:  210,  // ~7 months → SVG ≈ 2,878px
+  month: 720,  // ~2 years  → SVG ≈ 3,840px
 }
 
-export function GanttPanel({ tasks, onAddTask, onUpdateTask, onCreateDependency }: GanttPanelProps) {
+export function GanttPanel({ tasks, onAddTask, onEditTask, onDeleteTask, onUpdateTask, onCreateDependency }: GanttPanelProps) {
   const [zoom, setZoom] = useState<GanttZoom>('week')
   const [visibleStart, setVisibleStart] = useState<Date>(() => {
     // Start 2 weeks before today for week view
-    return addDays(todayStart(), -14)
+    return addDays(startOfDay(new Date()), -14)
   })
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const [scrollToTodaySignal, setScrollToTodaySignal] = useState(0)
 
   const visibleEnd = useMemo(
     () => addDays(visibleStart, ZOOM_SPAN[zoom]),
@@ -70,7 +60,8 @@ export function GanttPanel({ tasks, onAddTask, onUpdateTask, onCreateDependency 
   }
 
   const handleToday = () => {
-    setVisibleStart(addDays(todayStart(), -Math.floor(ZOOM_SPAN[zoom] / 3)))
+    setVisibleStart(addDays(startOfDay(new Date()), -Math.floor(ZOOM_SPAN[zoom] / 2)))
+    setScrollToTodaySignal((prev) => prev + 1)
   }
 
   const handleSelectTask = (task: TaskWithTags | null) => {
@@ -101,6 +92,9 @@ export function GanttPanel({ tasks, onAddTask, onUpdateTask, onCreateDependency 
           onSelectTask={handleSelectTask}
           onUpdateTask={onUpdateTask}
           onCreateDependency={onCreateDependency}
+          onEditTask={onEditTask}
+          onDeleteTask={onDeleteTask}
+          scrollToTodaySignal={scrollToTodaySignal}
         />
       )}
     </div>

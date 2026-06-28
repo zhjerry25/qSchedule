@@ -46,6 +46,7 @@ export function GanttForm({ open, onOpenChange, task }: GanttFormProps) {
   const [title, setTitle] = useState('')
   const [startDate, setStartDate] = useState<string | null>(null)
   const [endDate, setEndDate] = useState<string | null>(null)
+  const [milestoneDate, setMilestoneDate] = useState<string | null>(null)
   const [isMilestone, setIsMilestone] = useState(false)
   const [parentId, setParentId] = useState<string | null>(null)
   const [description, setDescription] = useState('')
@@ -58,6 +59,7 @@ export function GanttForm({ open, onOpenChange, task }: GanttFormProps) {
       setTitle(task?.title ?? '')
       setStartDate(task?.start_date ?? null)
       setEndDate(task?.end_date ?? null)
+      setMilestoneDate(task?.milestone_date ?? null)
       setIsMilestone(task?.is_milestone ?? false)
       setParentId(task?.parent_id ?? null)
       setDescription(task?.description ?? '')
@@ -124,7 +126,8 @@ export function GanttForm({ open, onOpenChange, task }: GanttFormProps) {
             title: title.trim(),
             description: description.trim() || undefined,
             start_date: startDate,
-            end_date: isMilestone ? startDate : endDate,
+            end_date: endDate,
+            milestone_date: isMilestone ? milestoneDate : null,
             is_milestone: isMilestone,
             parent_id: parentId,
           },
@@ -145,7 +148,8 @@ export function GanttForm({ open, onOpenChange, task }: GanttFormProps) {
           frequency: 'once', // Gantt tasks don't repeat; frequency is a schema constraint
           description: description.trim() || undefined,
           start_date: startDate,
-          end_date: isMilestone ? startDate : endDate,
+          end_date: endDate,
+          milestone_date: isMilestone ? milestoneDate : null,
           is_milestone: isMilestone,
           parent_id: parentId,
         })
@@ -209,9 +213,6 @@ export function GanttForm({ open, onOpenChange, task }: GanttFormProps) {
                 checked={isMilestone}
                 onChange={(e) => {
                   setIsMilestone(e.target.checked)
-                  if (e.target.checked) {
-                    setEndDate(null)
-                  }
                 }}
                 disabled={isPending}
                 className="h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-400"
@@ -221,7 +222,7 @@ export function GanttForm({ open, onOpenChange, task }: GanttFormProps) {
               </span>
             </label>
 
-            {/* Date range — two DatePickers; only one for milestones */}
+            {/* Date range */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">
@@ -234,21 +235,34 @@ export function GanttForm({ open, onOpenChange, task }: GanttFormProps) {
                   disabled={isPending}
                 />
               </div>
-              {!isMilestone && (
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    {t.gantt.endDate}
-                  </label>
-                  <DatePicker
-                    value={endDate}
-                    onChange={setEndDate}
-                    placeholder={t.todo.pickDate}
-                    disabled={isPending}
-                    minDate={startDate ? new Date(startDate + 'T00:00:00') : undefined}
-                  />
-                </div>
-              )}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  {t.gantt.endDate}
+                </label>
+                <DatePicker
+                  value={endDate}
+                  onChange={setEndDate}
+                  placeholder={t.todo.pickDate}
+                  disabled={isPending}
+                  minDate={startDate ? new Date(startDate + 'T00:00:00') : undefined}
+                />
+              </div>
             </div>
+
+            {/* Milestone date — only when milestone is checked */}
+            {isMilestone && (
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  {t.gantt.milestoneDate || 'Milestone Date'}
+                </label>
+                <DatePicker
+                  value={milestoneDate}
+                  onChange={setMilestoneDate}
+                  placeholder={t.todo.pickDate}
+                  disabled={isPending}
+                />
+              </div>
+            )}
 
             {/* Parent task selector */}
             {parentOptions.length > 0 && (

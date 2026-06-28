@@ -103,6 +103,7 @@ export const en: Translations = {
     startDate: 'Start Date',
     endDate: 'End Date',
     milestone: 'Milestone',
+    milestoneDate: 'Milestone Date',
     parentTask: 'Depends on',
     noParent: 'None',
     description: 'Description',

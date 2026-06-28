@@ -103,6 +103,7 @@ export const zh: Translations = {
     startDate: '开始日期',
     endDate: '结束日期',
     milestone: '里程碑',
+    milestoneDate: '里程碑日期',
     parentTask: '依赖任务',
     noParent: '无',
     description: '描述',

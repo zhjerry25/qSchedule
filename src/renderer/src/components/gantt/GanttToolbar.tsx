@@ -47,8 +47,8 @@ export function GanttToolbar({
           ))}
         </div>
 
-        {/* Date navigation */}
-        <div className="flex items-center gap-0.5 ml-2">
+        {/* Date navigation — period readout centered between arrows */}
+        <div className="flex items-center gap-1 ml-2">
           <button
             onClick={() => onNavigate('prev')}
             className="inline-flex items-center justify-center w-7 h-7 rounded-smooth text-neutral-500 hover:bg-neutral-100 transition-colors"
@@ -58,12 +58,12 @@ export function GanttToolbar({
               <path d="M8.84182 3.13514C9.04327 3.32401 9.05348 3.64042 8.86462 3.84188L5.43521 7.49991L8.86462 11.1579C9.05348 11.3594 9.04327 11.6758 8.84182 11.8647C8.64036 12.0535 8.32394 12.0433 8.13508 11.8419L4.38508 7.84188C4.20477 7.64955 4.20477 7.35027 4.38508 7.15794L8.13508 3.15794C8.32394 2.95648 8.64036 2.94628 8.84182 3.13514Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"/>
             </svg>
           </button>
-          <button
-            onClick={onToday}
-            className="px-2.5 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-100 rounded-smooth transition-colors"
-          >
-            {t.gantt.today}
-          </button>
+
+          {/* Period context label between prev/next */}
+          <span className="px-2 text-xs font-medium text-neutral-700 select-none min-w-[120px] text-center">
+            {dateRangeLabel}
+          </span>
+
           <button
             onClick={() => onNavigate('next')}
             className="inline-flex items-center justify-center w-7 h-7 rounded-smooth text-neutral-500 hover:bg-neutral-100 transition-colors"
@@ -75,10 +75,13 @@ export function GanttToolbar({
           </button>
         </div>
 
-        {/* Date range label */}
-        <span className="text-xs text-neutral-400 ml-3 select-none">
-          {dateRangeLabel}
-        </span>
+        {/* Today button */}
+        <button
+          onClick={onToday}
+          className="ml-1 px-2.5 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-100 rounded-smooth transition-colors border border-neutral-200"
+        >
+          {t.gantt.today}
+        </button>
       </div>
 
       {/* Right: add button */}

@@ -7,6 +7,7 @@ import { GanttDependencyLine } from './GanttDependencyLine'
 import { useGanttLayout, ROW_HEIGHT, HEADER_HEIGHT } from '../../hooks/useGanttLayout'
 import type { GanttZoom, BarPosition } from '../../hooks/useGanttLayout'
 import type { TaskWithTags } from '@shared/task'
+import { startOfDay, daysBetween } from '../../lib/date-utils'
 
 // ── Drag types ──
 
@@ -39,7 +40,10 @@ type DragState =
 // ── Helpers ──
 
 function toISODate(d: Date): string {
-  return d.toISOString().slice(0, 10)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${dd}`
 }
 
 interface GanttTimelineProps {
@@ -51,6 +55,9 @@ interface GanttTimelineProps {
   onSelectTask: (task: TaskWithTags | null) => void
   onUpdateTask: (id: string, input: { start_date?: string | null; end_date?: string | null }) => void
   onCreateDependency: (childId: string, parentId: string) => void
+  onEditTask: (task: TaskWithTags) => void
+  onDeleteTask: (task: TaskWithTags) => void
+  scrollToTodaySignal: number
 }
 
 export function GanttTimeline({
@@ -62,11 +69,29 @@ export function GanttTimeline({
   onSelectTask,
   onUpdateTask,
   onCreateDependency,
+  onEditTask,
+  onDeleteTask,
+  scrollToTodaySignal,
 }: GanttTimelineProps) {
   const layout = useGanttLayout({ tasks, zoom, visibleStart, visibleEnd })
   const svgRef = useRef<SVGSVGElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [drag, setDrag] = useState<DragState>({ kind: 'idle' })
   const dragRef = useRef<DragState>({ kind: 'idle' })
+
+  // ── Scroll to center today line ──
+  useEffect(() => {
+    if (scrollToTodaySignal === 0) return // skip initial mount
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    const today = startOfDay(new Date())
+    const daysFromStart = daysBetween(visibleStart, today)
+    const todayPx = daysFromStart * layout.dayWidth
+    const targetScrollLeft = todayPx - container.clientWidth / 2
+
+    container.scrollTo({ left: Math.max(0, targetScrollLeft), behavior: 'smooth' })
+  }, [scrollToTodaySignal])
 
   // Keep ref in sync for event listeners
   dragRef.current = drag
@@ -103,7 +128,7 @@ export function GanttTimeline({
       const snapped = layout.xToDate(d.currentX)
       onUpdateTask(d.taskId, { end_date: toISODate(snapped) })
     } else if (d.kind === 'move') {
-      const deltaDays = Math.round((d.currentX - d.startX) / layout.columnWidth)
+      const deltaDays = Math.round((d.currentX - d.startX) / layout.dayWidth)
       const origStart = new Date(d.origStart + 'T00:00:00')
       const origEnd = new Date(d.origEnd + 'T00:00:00')
       origStart.setDate(origStart.getDate() + deltaDays)
@@ -223,13 +248,13 @@ export function GanttTimeline({
     if (drag.kind === 'resize-left') {
       const newX = drag.currentX
       const newWidth = basePos.x + basePos.width - newX
-      if (newWidth < layout.columnWidth * 0.5) return null
+      if (newWidth < layout.dayWidth * 0.5) return null
       return { ...basePos, x: newX, width: newWidth }
     }
 
     if (drag.kind === 'resize-right') {
       const newWidth = drag.currentX - basePos.x
-      if (newWidth < layout.columnWidth * 0.5) return null
+      if (newWidth < layout.dayWidth * 0.5) return null
       return { ...basePos, width: newWidth }
     }
 
@@ -286,7 +311,7 @@ export function GanttTimeline({
           <div
             key={task.id}
             onClick={() => onSelectTask(task)}
-            className={`flex items-center px-3 border-b border-neutral-50 text-sm truncate cursor-pointer transition-colors ${
+            className={`group flex items-center px-3 border-b border-neutral-50 text-sm cursor-pointer transition-colors ${
               selectedTaskId === task.id
                 ? 'bg-neutral-100 text-neutral-900 font-medium'
                 : 'text-neutral-700 hover:bg-neutral-50'
@@ -294,13 +319,23 @@ export function GanttTimeline({
             style={{ height: ROW_HEIGHT + 2 }}
             title={task.title}
           >
-            <span className="truncate">{task.title}</span>
+            <span className="truncate flex-1 min-w-0">{task.title}</span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onDeleteTask(task)
+              }}
+              className="shrink-0 ml-1 w-5 h-5 flex items-center justify-center rounded-full text-neutral-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+              title={`Delete ${task.title}`}
+            >
+              ×
+            </button>
           </div>
         ))}
       </div>
 
       {/* SVG timeline */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto" ref={scrollContainerRef}>
         <svg
           ref={svgRef}
           width={layout.totalWidth - layout.labelWidth}
@@ -342,13 +377,11 @@ export function GanttTimeline({
           ))}
 
           {/* Today line */}
-          {layout.todayX !== null && (
-            <GanttTodayLine
-              x={offsetX(layout.todayX)}
-              y1={HEADER_HEIGHT}
-              y2={layout.totalHeight}
-            />
-          )}
+          <GanttTodayLine
+            x={offsetX(layout.todayX)}
+            y1={HEADER_HEIGHT}
+            y2={layout.totalHeight}
+          />
 
           {/* Existing dependency lines */}
           {dependencyLines.map(({ from, to, fromId, toId }) => (
@@ -407,6 +440,7 @@ export function GanttTimeline({
                   position={adjustedPos}
                   isSelected={selectedTaskId === task.id}
                   onSelect={onSelectTask}
+                  onDoubleClick={onEditTask}
                 />
                 {/* Invisible hit area for drag */}
                 <rect

@@ -56,6 +56,10 @@ const MIGRATIONS: Record<number, string[]> = {
     )`,
     `INSERT INTO settings (key, value) VALUES ('language', 'en')`,
   ],
+
+  4: [
+    `ALTER TABLE tasks ADD COLUMN milestone_date TEXT`,
+  ],
 }
 
 export function runMigrations(): void {

@@ -13,6 +13,7 @@ export interface Task {
   deadline: string | null
   start_date: string | null
   end_date: string | null
+  milestone_date: string | null
   is_milestone: boolean
 
   completed: boolean
@@ -48,6 +49,7 @@ export interface CreateTaskInput {
   deadline?: string | null
   start_date?: string | null
   end_date?: string | null
+  milestone_date?: string | null
   is_milestone?: boolean
   parent_id?: string | null
   gantt_id?: string | null
@@ -61,6 +63,7 @@ export interface UpdateTaskInput {
   deadline?: string | null
   start_date?: string | null
   end_date?: string | null
+  milestone_date?: string | null
   is_milestone?: boolean
   completed?: boolean
   parent_id?: string | null

@@ -94,6 +94,7 @@ export interface Translations {
     startDate: string
     endDate: string
     milestone: string
+    milestoneDate: string
     parentTask: string
     noParent: string
     description: string

@@ -7,12 +7,13 @@ interface GanttBarProps {
   position: BarPosition
   isSelected: boolean
   onSelect: (task: TaskWithTags) => void
+  onDoubleClick?: (task: TaskWithTags) => void
 }
 
 const TAG_DOT_RADIUS = 4
 const TAG_DOT_GAP = 3
 
-export function GanttBar({ task, position, isSelected, onSelect }: GanttBarProps) {
+export function GanttBar({ task, position, isSelected, onSelect, onDoubleClick }: GanttBarProps) {
   const color = assignGanttColor(task.title)
   const textColor = '#525252' // neutral-600
   const selectedClass = isSelected
@@ -35,6 +36,10 @@ export function GanttBar({ task, position, isSelected, onSelect }: GanttBarProps
       onClick={(e) => {
         e.stopPropagation()
         onSelect(task)
+      }}
+      onDoubleClick={(e) => {
+        e.stopPropagation()
+        onDoubleClick?.(task)
       }}
     >
       {/* Bar body */}

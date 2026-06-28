@@ -13,6 +13,40 @@ export function todayISO(): string {
 }
 
 /**
+ * Normalize a Date to midnight (00:00:00.000) in local timezone.
+ */
+export function startOfDay(d: Date): Date {
+  const c = new Date(d)
+  c.setHours(0, 0, 0, 0)
+  return c
+}
+
+/**
+ * Add n days to a Date (mutates and returns a new Date).
+ * Positive n moves forward, negative n moves backward.
+ */
+export function addDays(d: Date, n: number): Date {
+  const c = new Date(d)
+  c.setDate(c.getDate() + n)
+  return c
+}
+
+/**
+ * Count whole days between two Dates (positive if b > a).
+ */
+export function daysBetween(a: Date, b: Date): number {
+  return Math.round((b.getTime() - a.getTime()) / 86400000)
+}
+
+/**
+ * Check if a Date falls on Saturday (6) or Sunday (0).
+ */
+export function isWeekend(d: Date): boolean {
+  const day = d.getDay()
+  return day === 0 || day === 6
+}
+
+/**
  * Check if a date string falls on today (local timezone).
  * Returns false for null, empty, or invalid date strings.
  */

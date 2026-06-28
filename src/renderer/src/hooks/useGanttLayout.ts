@@ -1,12 +1,13 @@
 import { useMemo } from 'react'
 import type { TaskWithTags } from '@shared/task'
+import { startOfDay, addDays, daysBetween, isWeekend, getWeekStart } from '../lib/date-utils'
 
 export type GanttZoom = 'day' | 'week' | 'month'
 
-const ZOOM_CONFIG: Record<GanttZoom, { columnWidth: number; daysPerCell: number }> = {
-  day: { columnWidth: 36, daysPerCell: 1 },
-  week: { columnWidth: 64, daysPerCell: 7 },
-  month: { columnWidth: 120, daysPerCell: 30 },
+const ZOOM_CONFIG: Record<GanttZoom, { daysPerCell: number; cellWidth: number }> = {
+  day:   { daysPerCell: 1,  cellWidth: 96  },
+  week:  { daysPerCell: 7,  cellWidth: 96  },
+  month: { daysPerCell: 30, cellWidth: 160 },
 }
 
 export const HEADER_HEIGHT = 48
@@ -38,50 +39,19 @@ export interface BarPosition {
 }
 
 export interface UseGanttLayoutOutput {
-  columnWidth: number
+  dayWidth: number
   totalWidth: number
   totalHeight: number
   headerCells: HeaderCell[]
   barPositions: Map<string, BarPosition>
   taskRows: Array<{ task: TaskWithTags; y: number }>
-  todayX: number | null
+  todayX: number
   dateToX: (date: Date) => number
   xToDate: (x: number) => Date
   labelWidth: number
   rowHeight: number
   headerHeight: number
   milestoneSize: number
-}
-
-// ── Pure date helpers ──
-
-function startOfDay(d: Date): Date {
-  const c = new Date(d)
-  c.setHours(0, 0, 0, 0)
-  return c
-}
-
-function daysBetween(a: Date, b: Date): number {
-  return Math.round((b.getTime() - a.getTime()) / 86400000)
-}
-
-function addDays(d: Date, n: number): Date {
-  const c = new Date(d)
-  c.setDate(c.getDate() + n)
-  return c
-}
-
-function isWeekend(d: Date): boolean {
-  const day = d.getDay()
-  return day === 0 || day === 6
-}
-
-function getWeekStart(d: Date): Date {
-  const c = startOfDay(d)
-  const day = c.getDay()
-  const diff = day === 0 ? -6 : 1 - day // Monday start
-  c.setDate(c.getDate() + diff)
-  return c
 }
 
 function formatHeaderDate(d: Date, zoom: GanttZoom): string {
@@ -113,7 +83,8 @@ export function useGanttLayout({
   visibleEnd,
 }: UseGanttLayoutInput): UseGanttLayoutOutput {
   return useMemo(() => {
-    const { columnWidth, daysPerCell } = ZOOM_CONFIG[zoom]
+    const { daysPerCell, cellWidth } = ZOOM_CONFIG[zoom]
+    const dayWidth = cellWidth / daysPerCell
 
     // Ensure visible range covers at least 1 cell
     const vs = startOfDay(visibleStart)
@@ -123,15 +94,15 @@ export function useGanttLayout({
     }
 
     const totalDays = daysBetween(vs, ve)
-    const totalWidth = Math.max(totalDays * columnWidth, columnWidth)
+    const totalWidth = Math.max(totalDays * dayWidth, cellWidth)
 
     // Date ↔ x conversion
     const dateToX = (date: Date): number => {
-      return daysBetween(vs, startOfDay(date)) * columnWidth
+      return daysBetween(vs, startOfDay(date)) * dayWidth
     }
 
     const xToDate = (x: number): Date => {
-      const days = Math.round(x / columnWidth)
+      const days = Math.round(x / dayWidth)
       return addDays(vs, days)
     }
 
@@ -142,8 +113,8 @@ export function useGanttLayout({
         const d = addDays(vs, i)
         headerCells.push({
           label: formatHeaderDate(d, zoom),
-          x: i * columnWidth,
-          width: columnWidth,
+          x: i * cellWidth,
+          width: cellWidth,
           isWeekend: isWeekend(d),
         })
       }
@@ -154,8 +125,8 @@ export function useGanttLayout({
         const next = addDays(cursor, 7)
         headerCells.push({
           label: formatHeaderDate(cursor, zoom),
-          x: daysBetween(vs, cursor) * columnWidth,
-          width: 7 * columnWidth,
+          x: daysBetween(vs, cursor) * dayWidth,
+          width: cellWidth,
         })
         cursor = next
       }
@@ -166,32 +137,87 @@ export function useGanttLayout({
         const next = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1)
         headerCells.push({
           label: formatHeaderDate(cursor, zoom),
-          x: daysBetween(vs, cursor) * columnWidth,
-          width: daysBetween(cursor, next) * columnWidth,
+          x: daysBetween(vs, cursor) * dayWidth,
+          width: cellWidth,
         })
         cursor = next
       }
     }
 
-    // ── Task rows ──
-    const taskRows: Array<{ task: TaskWithTags; y: number }> = tasks.map((task, idx) => ({
+    // ── Lane assignment (first-fit by start date) ──
+
+    interface Lane {
+      latestEnd: Date
+    }
+
+    // Sort tasks: by start_date ASC (nulls last), then by duration DESC
+    const sortedTasks = [...tasks].sort((a, b) => {
+      const aStart = a.start_date ?? '9999-12-31'
+      const bStart = b.start_date ?? '9999-12-31'
+      if (aStart !== bStart) return aStart.localeCompare(bStart)
+      // Longer duration first (better packing)
+      const aDur = a.start_date && a.end_date
+        ? daysBetween(new Date(a.start_date + 'T00:00:00'), new Date(a.end_date + 'T00:00:00'))
+        : 0
+      const bDur = b.start_date && b.end_date
+        ? daysBetween(new Date(b.start_date + 'T00:00:00'), new Date(b.end_date + 'T00:00:00'))
+        : 0
+      return bDur - aDur
+    })
+
+    const lanes: Lane[] = []
+    const taskLaneMap = new Map<string, number>() // taskId → laneIndex
+
+    for (const task of sortedTasks) {
+      const taskStart = task.start_date ? new Date(task.start_date + 'T00:00:00') : null
+      const taskEnd = task.end_date ? new Date(task.end_date + 'T00:00:00') : taskStart
+
+      if (!taskStart) {
+        // No date at all — assign to a new lane
+        taskLaneMap.set(task.id, lanes.length)
+        lanes.push({ latestEnd: new Date(0) })
+        continue
+      }
+
+      // First-fit: find existing lane where task starts after lane's latest end
+      let assigned = false
+      for (let li = 0; li < lanes.length; li++) {
+        if (taskStart >= lanes[li].latestEnd) {
+          taskLaneMap.set(task.id, li)
+          if (taskEnd && taskEnd > lanes[li].latestEnd) {
+            lanes[li].latestEnd = taskEnd
+          }
+          assigned = true
+          break
+        }
+      }
+
+      if (!assigned) {
+        taskLaneMap.set(task.id, lanes.length)
+        lanes.push({ latestEnd: taskEnd ?? taskStart })
+      }
+    }
+
+    // ── Task rows (ordered by original array for label column consistency) ──
+    const taskRows: Array<{ task: TaskWithTags; y: number }> = tasks.map((task) => ({
       task,
-      y: HEADER_HEIGHT + idx * (ROW_HEIGHT + ROW_GAP),
+      y: HEADER_HEIGHT + (taskLaneMap.get(task.id) ?? 0) * (ROW_HEIGHT + ROW_GAP),
     }))
 
-    const totalHeight = HEADER_HEIGHT + tasks.length * (ROW_HEIGHT + ROW_GAP)
+    const totalHeight = HEADER_HEIGHT + Math.max(lanes.length, 1) * (ROW_HEIGHT + ROW_GAP)
 
     // ── Bar positions ──
     const barPositions = new Map<string, BarPosition>()
-    for (let i = 0; i < tasks.length; i++) {
-      const task = tasks[i]
-      const y = HEADER_HEIGHT + i * (ROW_HEIGHT + ROW_GAP)
+    for (const task of tasks) {
+      const laneIdx = taskLaneMap.get(task.id) ?? lanes.length
+      const y = HEADER_HEIGHT + laneIdx * (ROW_HEIGHT + ROW_GAP)
       const isMilestone = task.is_milestone
 
       if (isMilestone) {
-        // Only need start_date; center the diamond on that date
-        if (task.start_date) {
-          const cx = dateToX(new Date(task.start_date + 'T00:00:00'))
+        // Use milestone_date if available, fall back to start_date
+        const mDate = task.milestone_date ?? task.start_date
+        if (mDate) {
+          const cx = dateToX(new Date(mDate + 'T00:00:00'))
           barPositions.set(task.id, {
             x: cx - MILESTONE_SIZE / 2,
             y: y + (ROW_HEIGHT - MILESTONE_SIZE) / 2,
@@ -207,7 +233,7 @@ export function useGanttLayout({
 
         if (sd && ed) {
           const x = dateToX(sd)
-          const width = Math.max(dateToX(ed) - x, columnWidth * 0.5) // minimum visible bar
+          const width = Math.max(dateToX(ed) - x, Math.max(dayWidth * 0.5, 2))
           barPositions.set(task.id, {
             x,
             y: y + 4,
@@ -221,16 +247,16 @@ export function useGanttLayout({
 
     // ── Today line ──
     const today = startOfDay(new Date())
-    const todayX = today >= vs && today <= ve ? dateToX(today) + columnWidth / 2 : null
+    const todayX = dateToX(today)
 
     return {
-      columnWidth,
+      dayWidth,
       totalWidth: totalWidth + LABEL_WIDTH,
       totalHeight: Math.max(totalHeight, 200),
       headerCells,
       barPositions,
       taskRows,
-      todayX: todayX !== null ? todayX + LABEL_WIDTH : null,
+      todayX: todayX + LABEL_WIDTH,
       dateToX: (d) => dateToX(d) + LABEL_WIDTH,
       xToDate: (x) => xToDate(x - LABEL_WIDTH),
       labelWidth: LABEL_WIDTH,
