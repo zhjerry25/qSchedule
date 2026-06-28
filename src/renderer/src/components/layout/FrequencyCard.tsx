@@ -65,14 +65,32 @@ export function FrequencyCard({
                   disabled={isCompleting}
                 />
                 <div className="flex-1 min-w-0">
-                  <span
-                    className={[
-                      'text-sm text-neutral-800 truncate block',
-                      task.completed && 'line-through text-neutral-400',
-                    ].join(' ')}
-                  >
-                    {task.title}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={[
+                        'text-sm text-neutral-800 truncate block',
+                        task.completed && 'line-through text-neutral-400',
+                      ].join(' ')}
+                    >
+                      {task.title}
+                    </span>
+                    {task.gantt_id && (
+                      <span
+                        className="shrink-0 text-neutral-400"
+                        title={t.gantt.linkedTask}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                          <path
+                            d="M5.5 1.5H3C2.17157 1.5 1.5 2.17157 1.5 3V9C1.5 9.82843 2.17157 10.5 3 10.5H9C9.82843 10.5 10.5 9.82843 10.5 9V6.5M6.5 1.5H10.5M10.5 1.5V5.5M10.5 1.5L5.5 6.5"
+                            stroke="currentColor"
+                            strokeWidth="1"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </span>
+                    )}
+                  </div>
                   {task.description && (
                     <span className="text-[11px] text-neutral-400 truncate block mt-0.5">
                       {task.description}

@@ -1,11 +1,15 @@
 import { Sidebar } from './Sidebar'
 import { CardStream } from './CardStream'
+import { GanttApp } from '../gantt/GanttApp'
+import { useUIStore } from '../../stores/ui-store'
 
 // WebkitAppRegion for Electron window dragging on macOS
 const DRAG = { WebkitAppRegion: 'drag' } as React.CSSProperties
 const NO_DRAG = { WebkitAppRegion: 'no-drag' } as React.CSSProperties
 
 export function AppShell() {
+  const activeView = useUIStore((s) => s.activeView)
+
   return (
     <div className="flex h-screen bg-neutral-50">
       <Sidebar />
@@ -17,7 +21,7 @@ export function AppShell() {
           style={DRAG}
         />
         <div className="flex-1 flex flex-col overflow-hidden" style={NO_DRAG}>
-          <CardStream />
+          {activeView === 'gantt' ? <GanttApp /> : <CardStream />}
         </div>
       </div>
     </div>

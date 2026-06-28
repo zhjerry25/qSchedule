@@ -9,6 +9,8 @@ interface DatePickerProps {
   onChange: (date: string | null) => void
   placeholder?: string
   disabled?: boolean
+  /** Earliest selectable date. Defaults to today (past dates disabled). */
+  minDate?: Date
 }
 
 export function DatePicker({
@@ -16,6 +18,7 @@ export function DatePicker({
   onChange,
   placeholder,
   disabled = false,
+  minDate,
 }: DatePickerProps) {
   const { t } = useI18n()
   const selected = value ? new Date(value + 'T00:00:00') : undefined
@@ -31,6 +34,7 @@ export function DatePicker({
       case 'date': return sd.label
     }
   })()
+  const disableBefore = minDate ?? new Date(new Date().setHours(0, 0, 0, 0))
 
   return (
     <Popover.Root>
@@ -78,7 +82,7 @@ export function DatePicker({
             onSelect={(date) =>
               onChange(date ? date.toISOString().slice(0, 10) : null)
             }
-            disabled={{ before: new Date(new Date().setHours(0, 0, 0, 0)) }}
+            disabled={{ before: disableBefore }}
           />
         </Popover.Content>
       </Popover.Portal>

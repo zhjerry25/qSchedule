@@ -79,6 +79,41 @@ export interface Translations {
     quit: string
     tooltip: string
   }
+  nav: {
+    tasks: string
+    gantt: string
+  }
+  gantt: {
+    emptyTitle: string
+    emptyDesc: string
+    createFirst: string
+    newTask: string
+    editTask: string
+    title: string
+    titlePlaceholder: string
+    startDate: string
+    endDate: string
+    milestone: string
+    parentTask: string
+    noParent: string
+    description: string
+    descriptionPlaceholder: string
+    tags: string
+    create: string
+    save: string
+    cancel: string
+    saving: string
+    deleteTask: string
+    deleteConfirm: string
+    today: string
+    zoomDay: string
+    zoomWeek: string
+    zoomMonth: string
+    noTasks: string
+    loading: string
+    errorLoading: string
+    linkedTask: string
+  }
   error: {
     unknown: string
     somethingWentWrong: string
