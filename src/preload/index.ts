@@ -40,6 +40,11 @@ const api = {
       ipcRenderer.invoke('tag:get-for-task', taskId),
   },
 
+  window: {
+    openMain: () => ipcRenderer.invoke('window:open-main'),
+    closePopup: () => ipcRenderer.invoke('window:close-popup'),
+  },
+
   ping: () => ipcRenderer.invoke('ping'),
 }
 

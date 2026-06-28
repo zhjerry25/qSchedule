@@ -1,29 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { taskApi } from '../lib/ipc'
-import { todayISO, isToday, isThisWeek } from '../lib/date-utils'
+import { todayISO, isThisWeek } from '../lib/date-utils'
+import { applyDynamicReset } from '../lib/task-transforms'
 import type { TaskWithTags } from '@shared/task'
-
-// ── Dynamic Reset Transform ──
-
-/**
- * Apply dynamic reset: daily/weekly tasks whose completed_at date is stale
- * are shown as incomplete in the UI. This NEVER mutates the database —
- * `completed` and `counter` remain true values in SQLite.
- */
-function applyDynamicReset(tasks: TaskWithTags[]): TaskWithTags[] {
-  const today = todayISO()
-  return tasks.map((task) => {
-    if (!task.completed || !task.completed_at) return task
-
-    if (task.frequency === 'daily' && !isToday(task.completed_at)) {
-      return { ...task, completed: false, completed_at: null }
-    }
-    if (task.frequency === 'weekly' && !isThisWeek(task.completed_at)) {
-      return { ...task, completed: false, completed_at: null }
-    }
-    return task
-  })
-}
 
 // ── useTasks ──
 

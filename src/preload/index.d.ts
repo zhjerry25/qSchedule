@@ -33,6 +33,10 @@ export interface IpcApi {
     removeFromTask(taskId: string, tagId: string): Promise<IpcResult<void>>
     getForTask(taskId: string): Promise<IpcResult<Tag[]>>
   }
+  window: {
+    openMain(): Promise<IpcResult<void>>
+    closePopup(): Promise<IpcResult<void>>
+  }
   ping(): Promise<string>
 }
 

@@ -1,72 +1,59 @@
-import { app, BrowserWindow } from 'electron'
-import { join } from 'path'
+import { app } from 'electron'
 import { runMigrations } from './database/migrations'
 import { registerIpcHandlers } from './ipc'
 import { closeDatabase } from './database/connection'
+import { TrayManager } from './tray/tray-manager'
+import { createMainWindow } from './windows/main-window'
+import { createPopupWindow } from './windows/popup-window'
 
-let mainWindow: BrowserWindow | null = null
-
-function createMainWindow(): BrowserWindow {
-  const win = new BrowserWindow({
-    width: 1100,
-    height: 720,
-    minWidth: 800,
-    minHeight: 500,
-    show: false,
-    titleBarStyle: 'hiddenInset',
-    webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
-      sandbox: false,
-    },
-  })
-
-  win.on('ready-to-show', () => {
-    win.show()
-  })
-
-  win.on('close', (e) => {
-    if (mainWindow) {
-      e.preventDefault()
-      win.hide()
-    }
-  })
-
-  // Load renderer
-  if (process.env.ELECTRON_RENDERER_URL) {
-    win.loadURL(process.env.ELECTRON_RENDERER_URL)
-  } else {
-    win.loadFile(join(__dirname, '../renderer/index.html'))
-  }
-
-  return win
-}
+let trayManager: TrayManager | null = null
 
 app.whenReady().then(() => {
   // Initialize database and run migrations
   runMigrations()
 
-  // Register all IPC handlers (task + tag + ping)
-  registerIpcHandlers()
+  // Create the tray manager — owns all window lifecycle
+  trayManager = new TrayManager(
+    () =>
+      createMainWindow({
+        onClosePrevented: () => {
+          // Main window was closed → hidden to tray. Nothing extra needed.
+        },
+      }),
+    () =>
+      createPopupWindow({
+        onBlur: () => {
+          setTimeout(() => {
+            if (trayManager && !trayManager.isPopupBlurSuppressed()) {
+              trayManager.hidePopup()
+            }
+            trayManager?.resetPopupBlurSuppress()
+          }, 100)
+        },
+      }),
+  )
 
-  // Create main window
-  mainWindow = createMainWindow()
+  // Register all IPC handlers (task + tag + window + ping)
+  registerIpcHandlers(trayManager)
 
+  // Initialize tray + create main window
+  trayManager.init()
+
+  // macOS dock click → show main window
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      mainWindow = createMainWindow()
-    } else {
-      mainWindow?.show()
-    }
+    trayManager?.showMainWindow()
   })
 })
 
 app.on('window-all-closed', () => {
+  // On macOS the app stays alive in the tray
   if (process.platform !== 'darwin') {
     app.quit()
   }
 })
 
 app.on('before-quit', () => {
-  mainWindow = null
+  trayManager?.destroy()
+  trayManager = null
   closeDatabase()
 })

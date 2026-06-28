@@ -59,3 +59,8 @@ export const tagApi = {
   getForTask: (taskId: string) =>
     unwrap<Tag[]>(window.api.tag.getForTask(taskId)),
 }
+
+export const windowApi = {
+  openMain: () => unwrap<void>(window.api.window.openMain()),
+  closePopup: () => unwrap<void>(window.api.window.closePopup()),
+}

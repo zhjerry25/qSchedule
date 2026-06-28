@@ -9,6 +9,10 @@ export const Channels = {
   TASK_UNCOMPLETE: 'task:uncomplete',
   TASK_GET_TODAY: 'task:get-today',
 
+  // Window operations
+  WINDOW_OPEN_MAIN: 'window:open-main',
+  WINDOW_CLOSE_POPUP: 'window:close-popup',
+
   // Tag operations
   TAG_LIST: 'tag:list',
   TAG_GET_BY_ID: 'tag:get-by-id',
