@@ -52,6 +52,21 @@ describe('applyDynamicReset — "once" frequency', () => {
     expect(result[0].completed).toBe(true)
   })
 
+  it('keeps once task completed today with full UTC ISO string', () => {
+    // Simulates the actual DB storage format (new Date().toISOString())
+    // The UTC date may differ from local date, but isToday must parse correctly
+    const now = new Date()
+    const utcISO = now.toISOString() // e.g. "2026-06-29T22:00:00.000Z"
+    const task = makeTask({
+      frequency: 'once',
+      completed: true,
+      completed_at: utcISO,
+    })
+    const result = applyDynamicReset([task])
+    expect(result).toHaveLength(1)
+    expect(result[0].completed).toBe(true)
+  })
+
   it('hides once task completed yesterday', () => {
     const yesterday = new Date()
     yesterday.setDate(yesterday.getDate() - 1)
@@ -89,6 +104,19 @@ describe('applyDynamicReset — "deadline" frequency', () => {
       frequency: 'deadline',
       completed: true,
       completed_at: todayISO(),
+    })
+    const result = applyDynamicReset([task])
+    expect(result).toHaveLength(1)
+    expect(result[0].completed).toBe(true)
+  })
+
+  it('keeps deadline task completed today with full UTC ISO string', () => {
+    const now = new Date()
+    const utcISO = now.toISOString()
+    const task = makeTask({
+      frequency: 'deadline',
+      completed: true,
+      completed_at: utcISO,
     })
     const result = applyDynamicReset([task])
     expect(result).toHaveLength(1)
@@ -134,6 +162,19 @@ describe('applyDynamicReset — "daily" frequency', () => {
     expect(result[0].completed).toBe(true)
   })
 
+  it('keeps daily task completed today with UTC ISO string', () => {
+    const now = new Date()
+    const utcISO = now.toISOString()
+    const task = makeTask({
+      frequency: 'daily',
+      completed: true,
+      completed_at: utcISO,
+    })
+    const result = applyDynamicReset([task])
+    expect(result).toHaveLength(1)
+    expect(result[0].completed).toBe(true)
+  })
+
   it('keeps uncompleted daily task', () => {
     const task = makeTask({ frequency: 'daily', completed: false, completed_at: null })
     const result = applyDynamicReset([task])
@@ -161,6 +202,19 @@ describe('applyDynamicReset — "weekly" frequency', () => {
       frequency: 'weekly',
       completed: true,
       completed_at: todayISO(),
+    })
+    const result = applyDynamicReset([task])
+    expect(result).toHaveLength(1)
+    expect(result[0].completed).toBe(true)
+  })
+
+  it('keeps weekly task completed this week with UTC ISO string', () => {
+    const now = new Date()
+    const utcISO = now.toISOString()
+    const task = makeTask({
+      frequency: 'weekly',
+      completed: true,
+      completed_at: utcISO,
     })
     const result = applyDynamicReset([task])
     expect(result).toHaveLength(1)

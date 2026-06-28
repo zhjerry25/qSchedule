@@ -380,7 +380,8 @@ export const taskRepository = {
 
     // Aligned with partitionTasks().today logic (see date-utils.ts):
     // - All daily tasks (regardless of completed — renderer handles dynamic reset)
-    // - Incomplete once/deadline tasks due today or overdue
+    // - All once/deadline tasks due today or overdue (regardless of completed —
+    //   the renderer's applyDynamicReset hides stale completed ones)
     // - Weekly tasks excluded (they belong in the Week section)
     const rows = db
       .prepare(
@@ -390,7 +391,6 @@ export const taskRepository = {
              frequency = 'daily'
              OR (
                frequency IN ('once', 'deadline')
-               AND completed = 0
                AND (
                  scheduled_date <= ?
                  OR (scheduled_date IS NULL AND deadline <= ?)

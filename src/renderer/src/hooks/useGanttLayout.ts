@@ -44,6 +44,7 @@ export interface UseGanttLayoutOutput {
   totalHeight: number
   headerCells: HeaderCell[]
   barPositions: Map<string, BarPosition>
+  milestonePositions: Map<string, BarPosition>
   taskRows: Array<{ task: TaskWithTags; y: number }>
   todayX: number
   dateToX: (date: Date) => number
@@ -107,13 +108,15 @@ export function useGanttLayout({
     }
 
     // ── Header cells ──
+    // All x values include LABEL_WIDTH so the coordinate system is consistent
+    // with todayX, dateToX, and xToDate. offsetX() in the timeline subtracts it.
     const headerCells: HeaderCell[] = []
     if (zoom === 'day') {
       for (let i = 0; i < totalDays; i++) {
         const d = addDays(vs, i)
         headerCells.push({
           label: formatHeaderDate(d, zoom),
-          x: i * cellWidth,
+          x: i * cellWidth + LABEL_WIDTH,
           width: cellWidth,
           isWeekend: isWeekend(d),
         })
@@ -125,7 +128,7 @@ export function useGanttLayout({
         const next = addDays(cursor, 7)
         headerCells.push({
           label: formatHeaderDate(cursor, zoom),
-          x: daysBetween(vs, cursor) * dayWidth,
+          x: daysBetween(vs, cursor) * dayWidth + LABEL_WIDTH,
           width: cellWidth,
         })
         cursor = next
@@ -137,7 +140,7 @@ export function useGanttLayout({
         const next = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1)
         headerCells.push({
           label: formatHeaderDate(cursor, zoom),
-          x: daysBetween(vs, cursor) * dayWidth,
+          x: daysBetween(vs, cursor) * dayWidth + LABEL_WIDTH,
           width: cellWidth,
         })
         cursor = next
@@ -207,39 +210,42 @@ export function useGanttLayout({
     const totalHeight = HEADER_HEIGHT + Math.max(lanes.length, 1) * (ROW_HEIGHT + ROW_GAP)
 
     // ── Bar positions ──
+    // All x values include LABEL_WIDTH for consistent coordinate system.
+    // offsetX() in the timeline subtracts it to map to SVG coordinates.
     const barPositions = new Map<string, BarPosition>()
+    const milestonePositions = new Map<string, BarPosition>()
     for (const task of tasks) {
       const laneIdx = taskLaneMap.get(task.id) ?? lanes.length
       const y = HEADER_HEIGHT + laneIdx * (ROW_HEIGHT + ROW_GAP)
-      const isMilestone = task.is_milestone
 
-      if (isMilestone) {
-        // Use milestone_date if available, fall back to start_date
+      // Compute regular bar position (from start_date to end_date) for ALL tasks
+      // that have dates, even if they are milestones
+      const sd = task.start_date ? new Date(task.start_date + 'T00:00:00') : null
+      const ed = task.end_date ? new Date(task.end_date + 'T00:00:00') : null
+
+      if (sd && ed) {
+        const x = dateToX(sd) + LABEL_WIDTH
+        const width = Math.max(dateToX(ed) - dateToX(sd), Math.max(dayWidth * 0.5, 2))
+        barPositions.set(task.id, {
+          x,
+          y: y + 4,
+          width,
+          height: ROW_HEIGHT - 8,
+          isMilestone: false,
+        })
+      }
+
+      // For milestone tasks, also compute the diamond marker
+      if (task.is_milestone) {
         const mDate = task.milestone_date ?? task.start_date
         if (mDate) {
-          const cx = dateToX(new Date(mDate + 'T00:00:00'))
-          barPositions.set(task.id, {
+          const cx = dateToX(new Date(mDate + 'T00:00:00')) + LABEL_WIDTH
+          milestonePositions.set(task.id, {
             x: cx - MILESTONE_SIZE / 2,
             y: y + (ROW_HEIGHT - MILESTONE_SIZE) / 2,
             width: MILESTONE_SIZE,
             height: MILESTONE_SIZE,
             isMilestone: true,
-          })
-        }
-      } else {
-        // Bar from start_date to end_date
-        const sd = task.start_date ? new Date(task.start_date + 'T00:00:00') : null
-        const ed = task.end_date ? new Date(task.end_date + 'T00:00:00') : null
-
-        if (sd && ed) {
-          const x = dateToX(sd)
-          const width = Math.max(dateToX(ed) - x, Math.max(dayWidth * 0.5, 2))
-          barPositions.set(task.id, {
-            x,
-            y: y + 4,
-            width,
-            height: ROW_HEIGHT - 8,
-            isMilestone: false,
           })
         }
       }
@@ -255,6 +261,7 @@ export function useGanttLayout({
       totalHeight: Math.max(totalHeight, 200),
       headerCells,
       barPositions,
+      milestonePositions,
       taskRows,
       todayX: todayX + LABEL_WIDTH,
       dateToX: (d) => dateToX(d) + LABEL_WIDTH,

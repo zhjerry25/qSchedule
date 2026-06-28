@@ -88,7 +88,7 @@ export function GanttTimeline({
     if (!container) return
 
     const today = startOfDay(new Date())
-    const daysFromStart = daysBetween(visibleStart, today)
+    const daysFromStart = daysBetween(startOfDay(visibleStart), today)
     const todayPx = daysFromStart * layout.dayWidth
     const targetScrollLeft = todayPx - container.clientWidth / 2
 
@@ -397,7 +397,7 @@ export function GanttTimeline({
             />
           ))}
 
-          {/* Bars + Milestones */}
+          {/* Bars */}
           {tasks.map((task) => {
             const basePos = layout.barPositions.get(task.id)
             if (!basePos) return null
@@ -406,16 +406,6 @@ export function GanttTimeline({
             const pos = dragPos ?? basePos
             const adjustedPos = { ...pos, x: offsetX(pos.x) }
             const handlers = getDragHandlers(task, adjustedPos)
-
-            if (pos.isMilestone) {
-              return (
-                <GanttMilestone
-                  key={task.id}
-                  task={task}
-                  position={adjustedPos}
-                />
-              )
-            }
 
             // Highlight as potential drop target during link drag
             const isLinkTarget =
@@ -457,7 +447,7 @@ export function GanttTimeline({
                   onMouseUp={handlers.onBarMouseUp}
                 />
                 {/* Link handle — small circle at right edge */}
-                {!pos.isMilestone && pos.width > 20 && (
+                {pos.width > 20 && (
                   <circle
                     cx={adjustedPos.x + adjustedPos.width}
                     cy={adjustedPos.y + adjustedPos.height / 2}
@@ -470,6 +460,21 @@ export function GanttTimeline({
                   />
                 )}
               </g>
+            )
+          })}
+
+          {/* Milestone diamonds (rendered on top of bars) */}
+          {tasks.map((task) => {
+            const milestonePos = layout.milestonePositions.get(task.id)
+            if (!milestonePos) return null
+
+            const adjustedPos = { ...milestonePos, x: offsetX(milestonePos.x) }
+            return (
+              <GanttMilestone
+                key={`milestone-${task.id}`}
+                task={task}
+                position={adjustedPos}
+              />
             )
           })}
 

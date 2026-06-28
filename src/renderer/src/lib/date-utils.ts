@@ -47,26 +47,49 @@ export function isWeekend(d: Date): boolean {
 }
 
 /**
+ * Parse a date string into a local Date.
+ * - Date-only strings (YYYY-MM-DD, 10 chars) are parsed as local midnight.
+ * - Full UTC ISO datetime strings (e.g. "2026-06-29T22:00:00.000Z") are
+ *   parsed by new Date() which converts to local time automatically.
+ */
+function parseDateLocal(dateStr: string): Date {
+  if (dateStr.length === 10) {
+    // Date-only — treat as local midnight
+    return new Date(dateStr + 'T00:00:00')
+  }
+  return new Date(dateStr)
+}
+
+/**
  * Check if a date string falls on today (local timezone).
  * Returns false for null, empty, or invalid date strings.
+ *
+ * Handles both date-only strings (YYYY-MM-DD) and full UTC ISO datetime
+ * strings from the database (e.g. "2026-06-29T22:00:00.000Z").
  */
 export function isToday(dateStr: string | null): boolean {
   if (!dateStr) return false
-  // Extract date part (first 10 chars = YYYY-MM-DD) to handle
-  // both date-only strings and full ISO datetime strings from DB
-  return dateStr.slice(0, 10) === todayISO()
+  const date = parseDateLocal(dateStr)
+  if (isNaN(date.getTime())) return false
+  const today = new Date()
+  return (
+    date.getFullYear() === today.getFullYear() &&
+    date.getMonth() === today.getMonth() &&
+    date.getDate() === today.getDate()
+  )
 }
 
 /**
  * Check if a date string falls within the current Mon–Sun week (local timezone).
  * Returns false for null, empty, or invalid date strings.
+ *
+ * Handles both date-only strings and full UTC ISO datetime strings from
+ * the database (e.g. "2026-06-29T22:00:00.000Z").
  */
 export function isThisWeek(dateStr: string | null): boolean {
   if (!dateStr) return false
 
-  // Extract date part to handle full ISO datetime strings from DB
-  const datePart = dateStr.slice(0, 10)
-  const date = new Date(datePart + 'T00:00:00')
+  const date = parseDateLocal(dateStr)
   if (isNaN(date.getTime())) return false
 
   const today = new Date()

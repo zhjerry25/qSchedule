@@ -32,8 +32,8 @@ export function GanttPanel({ tasks, onAddTask, onEditTask, onDeleteTask, onUpdat
   const { t, locale } = useI18n()
   const [zoom, setZoom] = useState<GanttZoom>('week')
   const [visibleStart, setVisibleStart] = useState<Date>(() => {
-    // Start 2 weeks before today for week view
-    return addDays(startOfDay(new Date()), -14)
+    // Center today in the viewport (same behavior as the "Today" button)
+    return addDays(startOfDay(new Date()), -Math.floor(ZOOM_SPAN['week'] / 2))
   })
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [scrollToTodaySignal, setScrollToTodaySignal] = useState(0)
