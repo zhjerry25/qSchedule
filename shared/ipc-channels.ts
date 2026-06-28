@@ -13,6 +13,13 @@ export const Channels = {
   WINDOW_OPEN_MAIN: 'window:open-main',
   WINDOW_CLOSE_POPUP: 'window:close-popup',
 
+  // Settings operations
+  SETTINGS_GET: 'settings:get',
+  SETTINGS_SET: 'settings:set',
+
+  // Popup window height
+  WINDOW_SET_POPUP_HEIGHT: 'window:set-popup-height',
+
   // Tag operations
   TAG_LIST: 'tag:list',
   TAG_GET_BY_ID: 'tag:get-by-id',

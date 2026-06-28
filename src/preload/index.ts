@@ -44,6 +44,14 @@ const api = {
   window: {
     openMain: () => ipcRenderer.invoke(Channels.WINDOW_OPEN_MAIN),
     closePopup: () => ipcRenderer.invoke(Channels.WINDOW_CLOSE_POPUP),
+    setPopupHeight: (height: number) =>
+      ipcRenderer.invoke(Channels.WINDOW_SET_POPUP_HEIGHT, height),
+  },
+
+  settings: {
+    get: (key: string) => ipcRenderer.invoke(Channels.SETTINGS_GET, key),
+    set: (key: string, value: string) =>
+      ipcRenderer.invoke(Channels.SETTINGS_SET, { key, value }),
   },
 }
 

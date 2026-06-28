@@ -1,5 +1,7 @@
 import * as Popover from '@radix-ui/react-popover'
 import { DayPicker } from 'react-day-picker'
+import { formatSmartDate } from '../../lib/date-utils'
+import { useI18n } from '../../i18n'
 import 'react-day-picker/style.css'
 
 interface DatePickerProps {
@@ -9,37 +11,18 @@ interface DatePickerProps {
   disabled?: boolean
 }
 
-function formatDisplay(dateStr: string | null): string {
-  if (!dateStr) return ''
-  const date = new Date(dateStr + 'T00:00:00')
-  if (isNaN(date.getTime())) return dateStr
-
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const target = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-  const diffDays = Math.round(
-    (target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-  )
-
-  if (diffDays === 0) return 'Today'
-  if (diffDays === 1) return 'Tomorrow'
-  if (diffDays === -1) return 'Yesterday'
-
-  return date.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  })
-}
-
 export function DatePicker({
   value,
   onChange,
-  placeholder = 'Pick a date',
+  placeholder,
   disabled = false,
 }: DatePickerProps) {
+  const { t } = useI18n()
   const selected = value ? new Date(value + 'T00:00:00') : undefined
-  const displayText = value ? formatDisplay(value) : placeholder
+  const defaultPlaceholder = placeholder ?? t.todo.pickDate
+  const displayText = value
+    ? (formatSmartDate(value, { includeWeekday: true }) ?? value)
+    : defaultPlaceholder
 
   return (
     <Popover.Root>

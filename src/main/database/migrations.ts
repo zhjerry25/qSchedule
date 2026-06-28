@@ -43,6 +43,19 @@ const MIGRATIONS: Record<number, string[]> = {
     `CREATE INDEX idx_tasks_sort_order ON tasks(sort_order)`,
     `CREATE INDEX idx_task_tags_tag_id ON task_tags(tag_id)`,
   ],
+
+  2: [
+    `CREATE INDEX idx_tasks_parent_id ON tasks(parent_id)`,
+    `CREATE INDEX idx_tasks_gantt_id ON tasks(gantt_id)`,
+  ],
+
+  3: [
+    `CREATE TABLE settings (
+      key   TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )`,
+    `INSERT INTO settings (key, value) VALUES ('language', 'en')`,
+  ],
 }
 
 export function runMigrations(): void {

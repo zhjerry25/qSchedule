@@ -1,7 +1,8 @@
-import { useState } from 'react'
 import { TodoCheckbox } from './TodoCheckbox'
 import { FrequencyBadge } from './FrequencyBadge'
 import { TagList } from '../tags/TagList'
+import { formatSmartDate } from '../../lib/date-utils'
+import { useI18n } from '../../i18n'
 import type { TaskWithTags } from '@shared/task'
 
 interface TodoCardProps {
@@ -12,34 +13,11 @@ interface TodoCardProps {
   isCompleting: boolean
 }
 
-function formatDate(dateStr: string | null): string | null {
-  if (!dateStr) return null
-  const date = new Date(dateStr + 'T00:00:00')
-  if (isNaN(date.getTime())) return dateStr
-
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const target = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-  const diffDays = Math.round(
-    (target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-  )
-
-  if (diffDays === 0) return 'Today'
-  if (diffDays === 1) return 'Tomorrow'
-  if (diffDays === -1) return 'Yesterday'
-
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  })
-}
-
 export function TodoCard({ task, onEdit, onDelete, onToggleComplete, isCompleting }: TodoCardProps) {
-  const [isDeleting, setIsDeleting] = useState(false)
-
-  const dateDisplay = formatDate(task.scheduled_date ?? task.deadline)
+  const { t } = useI18n()
+  const dateDisplay = formatSmartDate(task.scheduled_date ?? task.deadline)
   const dateLabel = task.frequency === 'deadline' && dateDisplay
-    ? `Due ${dateDisplay}`
+    ? `${t.todo.due} ${dateDisplay}`
     : dateDisplay
 
   return (
@@ -111,14 +89,14 @@ export function TodoCard({ task, onEdit, onDelete, onToggleComplete, isCompletin
             onClick={() => onEdit(task)}
             className="h-7 px-2 text-xs text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-smooth transition-colors"
           >
-            Edit
+            {t.todo.edit}
           </button>
           <button
             type="button"
             onClick={() => onDelete(task)}
             className="h-7 px-2 text-xs text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-smooth transition-colors"
           >
-            Delete
+            {t.todo.delete}
           </button>
         </div>
       </div>

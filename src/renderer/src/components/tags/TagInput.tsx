@@ -1,5 +1,6 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { TagBadge } from './TagBadge'
+import { useI18n } from '../../i18n'
 import type { Tag } from '@shared/tag'
 
 interface TagInputProps {
@@ -26,10 +27,12 @@ export function TagInput({
   onCreateTag,
   className = '',
 }: TagInputProps) {
+  const { t } = useI18n()
   const [inputValue, setInputValue] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const blurTimerRef = useRef<ReturnType<typeof setTimeout>>()
 
   // ── Refs for stable handleKeyDown dependencies ──
   const trimmedRef = useRef('')
@@ -132,9 +135,17 @@ export function TagInput({
 
   const handleBlur = useCallback(() => {
     // Delay to allow click events on dropdown items to fire first
-    setTimeout(() => {
+    clearTimeout(blurTimerRef.current)
+    blurTimerRef.current = setTimeout(() => {
       setInputValue('')
     }, 150)
+  }, [])
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      clearTimeout(blurTimerRef.current)
+    }
   }, [])
 
   // ── Render ──
@@ -160,7 +171,7 @@ export function TagInput({
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
-          placeholder={value.length === 0 ? 'Add tags...' : ''}
+          placeholder={value.length === 0 ? t.tag.addTags : ''}
           className="flex-1 min-w-[80px] outline-none text-sm bg-transparent text-neutral-900 placeholder:text-neutral-400"
           disabled={isCreating}
         />
@@ -199,8 +210,8 @@ export function TagInput({
               </span>
               <span className="truncate">
                 {isCreating
-                  ? 'Creating...'
-                  : `Create "${trimmed}"`}
+                  ? t.tag.creating
+                  : t.tag.create.replace('{name}', trimmed)}
               </span>
             </button>
           )}

@@ -63,4 +63,18 @@ export const tagApi = {
 export const windowApi = {
   openMain: () => unwrap<void>(window.api.window.openMain()),
   closePopup: () => unwrap<void>(window.api.window.closePopup()),
+  setPopupHeight: (height: number) =>
+    unwrap<void>(window.api.window.setPopupHeight(height)),
+}
+
+export const settingsApi = {
+  get: async (key: string): Promise<string | null> => {
+    const result = await window.api.settings.get(key)
+    if (result.error) throw new Error(result.error)
+    return result.data ?? null
+  },
+  set: async (key: string, value: string): Promise<void> => {
+    const result = await window.api.settings.set(key, value)
+    if (result.error) throw new Error(result.error)
+  },
 }

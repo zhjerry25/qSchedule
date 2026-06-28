@@ -67,7 +67,10 @@ export const tagRepository = {
 
   remove(id: string): void {
     const db = getDatabase()
-    db.prepare('DELETE FROM tags WHERE id = ?').run(id)
+    const result = db.prepare('DELETE FROM tags WHERE id = ?').run(id)
+    if (result.changes === 0) {
+      throw new Error(`Tag not found: ${id}`)
+    }
     // CASCADE handles task_tags cleanup
   },
 

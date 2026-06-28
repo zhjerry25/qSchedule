@@ -12,6 +12,7 @@ import { useTagMutations } from '../../hooks/useTagMutations'
 import { todayISO } from '../../lib/date-utils'
 import { assignColor } from '../../lib/color-palette'
 import { tagApi } from '../../lib/ipc'
+import { useI18n } from '../../i18n'
 import type { Frequency, TaskWithTags } from '@shared/task'
 import type { Tag } from '@shared/tag'
 
@@ -27,13 +28,17 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
   const { tags: allTags } = useTags()
   const { createTag } = useTagMutations()
   const queryClient = useQueryClient()
+  const { t } = useI18n()
 
   // Load existing tags when editing a task
   const { data: existingTags = [] } = useQuery({
     queryKey: task?.id
       ? (['tags', 'for-task', task.id] as const)
       : (['tags', 'for-task'] as const),
-    queryFn: () => tagApi.getForTask(task!.id),
+    queryFn: () => {
+      if (!task) return []
+      return tagApi.getForTask(task.id)
+    },
     enabled: isEdit && open,
   })
 
@@ -100,6 +105,7 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
   // ── Submit ──
   const handleSubmit = async () => {
     if (!titleValid) return
+    setTagError(null)
 
     try {
       if (isEdit) {
@@ -118,7 +124,7 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
           await syncTags(task!.id, existingTags, selectedTags)
         } catch (err) {
           setTagError(
-            `Tags could not be synced: ${err instanceof Error ? err.message : 'Unknown error'}. Task was saved.`,
+            t.error.tagSyncFailed.replace('{error}', err instanceof Error ? err.message : ''),
           )
         }
       } else {
@@ -139,7 +145,7 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
           }
         } catch (err) {
           setTagError(
-            `Tags could not be assigned: ${err instanceof Error ? err.message : 'Unknown error'}. Task was saved.`,
+            t.error.tagAssignFailed.replace('{error}', err instanceof Error ? err.message : ''),
           )
         }
       }
@@ -162,19 +168,19 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
         <Dialog.Overlay className="fixed inset-0 bg-black/20 data-[state=open]:animate-in data-[state=closed]:animate-out" />
         <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-smooth shadow-lg p-6 focus:outline-none max-h-[90vh] overflow-y-auto">
           <Dialog.Title className="text-lg font-semibold text-neutral-900">
-            {isEdit ? 'Edit Task' : 'New Task'}
+            {isEdit ? t.todo.editTask : t.todo.newTask}
           </Dialog.Title>
 
           <div className="mt-4 space-y-4">
             {/* Title */}
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Title
+                {t.todo.title}
               </label>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="What needs to be done?"
+                placeholder={t.todo.titlePlaceholder}
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && titleValid) {
@@ -188,7 +194,7 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
             {/* Frequency */}
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Frequency
+                {t.todo.frequency}
               </label>
               <FrequencySelector
                 value={frequency}
@@ -201,12 +207,12 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
             {frequency === 'once' && (
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">
-                  Scheduled Date
+                  {t.todo.scheduledDate}
                 </label>
                 <DatePicker
                   value={scheduledDate}
                   onChange={setScheduledDate}
-                  placeholder="Today (default)"
+                  placeholder={t.todo.todayDefault}
                   disabled={isPending}
                 />
               </div>
@@ -215,12 +221,12 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
             {frequency === 'deadline' && (
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">
-                  Deadline
+                  {t.todo.deadline}
                 </label>
                 <DatePicker
                   value={deadlineDate}
                   onChange={setDeadlineDate}
-                  placeholder="Pick a deadline"
+                  placeholder={t.todo.pickDeadline}
                   disabled={isPending}
                 />
               </div>
@@ -229,13 +235,13 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
             {/* Description */}
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Description{' '}
-                <span className="text-neutral-400 font-normal">(optional)</span>
+                {t.todo.description}{' '}
+                <span className="text-neutral-400 font-normal">{t.todo.optional}</span>
               </label>
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Add details..."
+                placeholder={t.todo.descriptionPlaceholder}
                 disabled={isPending}
               />
             </div>
@@ -243,8 +249,8 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
             {/* Tags */}
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Tags{' '}
-                <span className="text-neutral-400 font-normal">(optional)</span>
+                {t.todo.tags}{' '}
+                <span className="text-neutral-400 font-normal">{t.todo.optional}</span>
               </label>
               <TagInput
                 value={selectedTags}
@@ -277,7 +283,7 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
               disabled={isPending}
               className="inline-flex items-center justify-center h-9 px-4 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-smooth hover:bg-neutral-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 disabled:opacity-50"
             >
-              Cancel
+              {t.todo.cancel}
             </button>
             <button
               type="button"
@@ -285,7 +291,7 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
               disabled={!titleValid || isPending}
               className="inline-flex items-center justify-center h-9 px-4 text-sm font-medium text-white bg-neutral-900 rounded-smooth hover:bg-neutral-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 disabled:opacity-50"
             >
-              {isPending ? 'Saving...' : isEdit ? 'Save' : 'Create'}
+              {isPending ? t.todo.saving : isEdit ? t.todo.save : t.todo.create}
             </button>
           </div>
         </Dialog.Content>

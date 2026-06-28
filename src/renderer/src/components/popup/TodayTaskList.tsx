@@ -3,6 +3,7 @@ import { useCompleteTask } from '../../hooks/useCompleteTask'
 import { TodoCheckbox } from '../todo/TodoCheckbox'
 import { FrequencyBadge } from '../todo/FrequencyBadge'
 import { TagList } from '../tags/TagList'
+import { useI18n } from '../../i18n'
 import type { TaskWithTags } from '@shared/task'
 
 // ── Compact Task Row ──
@@ -68,11 +69,12 @@ function LoadingSkeleton() {
 
 // ── Empty State ──
 
-function EmptyState() {
+function PopupEmptyState() {
+  const { t } = useI18n()
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
       <span className="text-2xl">&#x2714;</span>
-      <p className="text-sm text-neutral-500 mt-2">All clear for today</p>
+      <p className="text-sm text-neutral-500 mt-2">{t.empty.popupAllClear}</p>
     </div>
   )
 }
@@ -80,9 +82,10 @@ function EmptyState() {
 // ── Error State ──
 
 function ErrorMessage() {
+  const { t } = useI18n()
   return (
     <div className="py-8 text-center">
-      <p className="text-sm text-red-500">Could not load tasks</p>
+      <p className="text-sm text-red-500">{t.popup.couldNotLoad}</p>
     </div>
   )
 }
@@ -95,7 +98,7 @@ export function TodayTaskList() {
 
   if (isLoading) return <LoadingSkeleton />
   if (isError) return <ErrorMessage />
-  if (tasks.length === 0) return <EmptyState />
+  if (tasks.length === 0) return <PopupEmptyState />
 
   return (
     <div className="flex flex-col gap-0.5 mt-1">

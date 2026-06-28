@@ -36,6 +36,11 @@ export interface IpcApi {
   window: {
     openMain(): Promise<IpcResult<void>>
     closePopup(): Promise<IpcResult<void>>
+    setPopupHeight(height: number): Promise<IpcResult<void>>
+  }
+  settings: {
+    get(key: string): Promise<IpcResult<string | null>>
+    set(key: string, value: string): Promise<IpcResult<void>>
   }
 }
 

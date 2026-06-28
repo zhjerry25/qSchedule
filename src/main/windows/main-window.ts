@@ -19,7 +19,7 @@ export function createMainWindow(callbacks: MainWindowCallbacks): BrowserWindow 
     titleBarStyle: 'hiddenInset',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false,
+      sandbox: true,
     },
   })
 

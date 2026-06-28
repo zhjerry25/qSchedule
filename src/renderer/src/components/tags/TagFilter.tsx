@@ -1,5 +1,6 @@
 import { useTags } from '../../hooks/useTags'
 import { useUIStore } from '../../stores/ui-store'
+import { useI18n } from '../../i18n'
 
 interface TagFilterProps {
   className?: string
@@ -14,6 +15,7 @@ export function TagFilter({ className = '' }: TagFilterProps) {
   const { tags, isLoading, isError } = useTags()
   const selectedTagIds = useUIStore((s) => s.selectedTagIds)
   const toggleTagFilter = useUIStore((s) => s.toggleTagFilter)
+  const { t } = useI18n()
 
   // ── Loading state ──
   if (isLoading) {
@@ -33,7 +35,7 @@ export function TagFilter({ className = '' }: TagFilterProps) {
   if (isError) {
     return (
       <p className={`mt-2 text-xs text-rose-500 italic ${className}`}>
-        Failed to load tags
+        {t.tag.failedToLoad}
       </p>
     )
   }
@@ -42,7 +44,7 @@ export function TagFilter({ className = '' }: TagFilterProps) {
   if (tags.length === 0) {
     return (
       <p className={`mt-2 text-xs text-neutral-300 italic ${className}`}>
-        No tags yet
+        {t.tag.noTags}
       </p>
     )
   }

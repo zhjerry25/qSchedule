@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTaskMutations } from '../../hooks/useTaskMutations'
 import { todayISO } from '../../lib/date-utils'
+import { useI18n } from '../../i18n'
 
 interface QuickAddInputProps {
   className?: string
@@ -9,6 +10,7 @@ interface QuickAddInputProps {
 export function QuickAddInput({ className = '' }: QuickAddInputProps) {
   const [value, setValue] = useState('')
   const { createTask } = useTaskMutations()
+  const { t } = useI18n()
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && value.trim()) {
@@ -30,7 +32,7 @@ export function QuickAddInput({ className = '' }: QuickAddInputProps) {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Add a task..."
+        placeholder={t.todo.quickAddPlaceholder}
         disabled={createTask.isPending}
         className={[
           'w-full h-10 px-4 text-sm rounded-smooth border transition-colors',

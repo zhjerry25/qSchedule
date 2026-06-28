@@ -51,6 +51,39 @@ export function isThisWeek(dateStr: string | null): boolean {
 }
 
 /**
+ * Format a date string as smart relative display (Today/Tomorrow/Yesterday) or
+ * a formatted date. Supports both date-only (YYYY-MM-DD) and full ISO strings.
+ */
+export function formatSmartDate(
+  dateStr: string | null,
+  options?: { includeWeekday?: boolean },
+): string | null {
+  if (!dateStr) return null
+  const date = new Date(dateStr.slice(0, 10) + 'T00:00:00')
+  if (isNaN(date.getTime())) return dateStr
+
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const target = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  const diffDays = Math.round(
+    (target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+  )
+
+  if (diffDays === 0) return 'Today'
+  if (diffDays === 1) return 'Tomorrow'
+  if (diffDays === -1) return 'Yesterday'
+
+  const localeOptions: Intl.DateTimeFormatOptions = {
+    month: 'short',
+    day: 'numeric',
+  }
+  if (options?.includeWeekday) {
+    localeOptions.weekday = 'short'
+  }
+  return date.toLocaleDateString('en-US', localeOptions)
+}
+
+/**
  * Get the Monday 00:00:00.000 of the week containing `date`.
  * Defaults to today if no date provided.
  */

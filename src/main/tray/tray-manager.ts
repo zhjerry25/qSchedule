@@ -4,6 +4,7 @@ import { deflateSync } from 'zlib'
 import type { MainWindowCallbacks } from '../windows/main-window'
 import type { PopupWindowCallbacks } from '../windows/popup-window'
 import { positionPopupNearTray } from '../windows/popup-window'
+import { TRAY_STRINGS } from '../i18n'
 
 // ── Programmatic Tray Icon Generation ──
 
@@ -120,7 +121,7 @@ const crcTable: number[] = (() => {
 
 // ── TrayManager ──
 
-const CLICK_INTERVAL_MS = 300
+const CLICK_INTERVAL_MS = 250
 
 export class TrayManager {
   private tray: Tray | null = null
@@ -128,6 +129,7 @@ export class TrayManager {
   private popupWindow: BrowserWindow | null = null
   private clickTimer: ReturnType<typeof setTimeout> | null = null
   private blurSequence = 0
+  private locale = 'en'
 
   constructor(
     private createMainWin: (callbacks: MainWindowCallbacks) => BrowserWindow,
@@ -137,17 +139,14 @@ export class TrayManager {
   // ── Initialization ──
 
   init(): void {
-    // Create the main window eagerly (same as before)
-    this.mainWindow = this.createMainWin({
-      onClosePrevented: () => {
-        // Main window was closed → hidden. Tray keeps the app alive.
-      },
-    })
+    // Main window is lazy-created on first showMainWindow() call.
+    // This reduces startup resource consumption — the popup and tray
+    // provide the primary interaction surface.
 
-    // Create tray icon — failure is non-fatal; app continues with main window
+    // Create tray icon — failure is non-fatal; app continues without tray
     try {
       this.tray = new Tray(createTrayIcon())
-      this.tray.setToolTip('Time Planner')
+      this.tray.setToolTip(TRAY_STRINGS[this.locale]?.tooltip ?? 'Time Planner')
 
       // Tray click: single vs double-click detection via 300ms timer
       this.tray.on('click', (_event, bounds) => {
@@ -180,10 +179,16 @@ export class TrayManager {
 
   showMainWindow(): void {
     this.blurSequence += 1
-    if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-      this.mainWindow.show()
-      this.mainWindow.focus()
+    // Lazy-create main window on first open
+    if (!this.mainWindow || this.mainWindow.isDestroyed()) {
+      this.mainWindow = this.createMainWin({
+        onClosePrevented: () => {
+          // Main window was closed → hidden. Tray keeps the app alive.
+        },
+      })
     }
+    this.mainWindow.show()
+    this.mainWindow.focus()
     this.hidePopup()
   }
 
@@ -217,7 +222,7 @@ export class TrayManager {
     }
 
     positionPopupNearTray(this.popupWindow, bounds)
-    this.popupWindow.show()
+    this.popupWindow.showInactive()
   }
 
   // ── Tray Click Handlers ──
@@ -233,13 +238,14 @@ export class TrayManager {
   // ── Context Menu ──
 
   private buildContextMenu(): Menu {
+    const s = TRAY_STRINGS[this.locale] ?? TRAY_STRINGS['en']!
     return Menu.buildFromTemplate([
       {
-        label: 'Open Main',
+        label: s.openMain,
         click: () => this.showMainWindow(),
       },
       {
-        label: "Today's Tasks",
+        label: s.todaysTasks,
         click: () => {
           // Use tray bounds if available, otherwise fall back to primary display
           const bounds = this.tray?.getBounds() ?? { x: 0, y: 0, width: 0, height: 0 }
@@ -248,12 +254,41 @@ export class TrayManager {
       },
       { type: 'separator' },
       {
-        label: 'Quit',
+        label: s.quit,
         click: () => {
           app.quit()
         },
       },
     ])
+  }
+
+  // ── Locale ──
+
+  setLocale(locale: string): void {
+    if (locale !== 'en' && locale !== 'zh') return
+    this.locale = locale
+  }
+
+  rebuildMenu(): void {
+    if (this.tray) {
+      this.tray.setContextMenu(this.buildContextMenu())
+      this.tray.setToolTip(TRAY_STRINGS[this.locale]?.tooltip ?? 'Time Planner')
+    }
+  }
+
+  // ── Popup Height ──
+
+  setPopupHeight(height: number): void {
+    if (this.popupWindow && !this.popupWindow.isDestroyed()) {
+      const minH = 160
+      const maxH = 520
+      const clampedH = Math.max(minH, Math.min(maxH, Math.round(height)))
+      const [w] = this.popupWindow.getSize()
+      this.popupWindow.setSize(w, clampedH)
+      // Re-position after resize to stay aligned with tray
+      const bounds = this.tray?.getBounds()
+      if (bounds) positionPopupNearTray(this.popupWindow, bounds)
+    }
   }
 
   // ── Lifecycle ──

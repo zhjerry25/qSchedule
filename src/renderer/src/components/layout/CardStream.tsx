@@ -3,18 +3,13 @@ import { useUIStore } from '../../stores/ui-store'
 import { useTasks } from '../../hooks/useTasks'
 import { useTaskMutations } from '../../hooks/useTaskMutations'
 import { useCompleteTask } from '../../hooks/useCompleteTask'
-import {
-  SECTION_LABELS,
-  SECTION_EMPTY_TITLES,
-  SECTION_EMPTY_DESCRIPTIONS,
-} from '../../lib/constants'
-import type { SectionKey } from '../../lib/constants'
 import { partitionTasks } from '../../lib/date-utils'
-import { TodoCard } from '../todo/TodoCard'
+import { SectionPanel } from './SectionPanel'
 import { TodoForm } from '../todo/TodoForm'
 import { QuickAddInput } from '../todo/QuickAddInput'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { EmptyState } from '../ui/EmptyState'
+import { useI18n } from '../../i18n'
 import type { TaskWithTags } from '@shared/task'
 
 export function CardStream() {
@@ -24,6 +19,7 @@ export function CardStream() {
   const { tasks, isLoading, isError, error } = useTasks(selectedTagIds)
   const { deleteTask } = useTaskMutations()
   const { toggleComplete, isPending: isCompleting } = useCompleteTask()
+  const { t } = useI18n()
 
   // ── Local UI state ──
   const [editingTask, setEditingTask] = useState<TaskWithTags | null>(null)
@@ -33,7 +29,7 @@ export function CardStream() {
   if (isLoading) {
     return (
       <main className="flex-1 flex items-center justify-center bg-neutral-50">
-        <p className="text-sm text-neutral-400">Loading...</p>
+        <p className="text-sm text-neutral-400">{t.app.loading}</p>
       </main>
     )
   }
@@ -43,8 +39,8 @@ export function CardStream() {
     return (
       <main className="flex-1 flex items-center justify-center bg-neutral-50">
         <EmptyState
-          title="Something went wrong"
-          description={error?.message || 'An unexpected error occurred'}
+          title={t.error.somethingWentWrong}
+          description={error?.message || t.error.unknown}
         />
       </main>
     )
@@ -52,62 +48,39 @@ export function CardStream() {
 
   // ── Partition tasks into sections ──
   const sections = partitionTasks(tasks)
-  const sectionEntries: { key: SectionKey; tasks: TaskWithTags[] }[] = [
-    { key: 'today', tasks: sections.today },
-    { key: 'week', tasks: sections.week },
-    { key: 'later', tasks: sections.later },
-  ]
 
-  // ── Render ──
   return (
     <main className="flex-1 overflow-y-auto bg-neutral-50">
-      <div className="max-w-2xl mx-auto px-6 py-4 space-y-6">
+      <div className="px-6 py-4 space-y-8">
         {/* Quick-add input — always visible at top */}
         <QuickAddInput />
 
-        {/* Sections */}
-        {sectionEntries.map(({ key, tasks: sectionTasks }) => (
-          <section key={key}>
-            {/* Section header */}
-            <h2 className="flex items-center gap-2 mb-3">
-              <span className="text-sm font-semibold text-neutral-700">
-                {SECTION_LABELS[key]}
-              </span>
-              <span className="text-xs text-neutral-400 tabular-nums">
-                {sectionTasks.length}
-              </span>
-            </h2>
-
-            {/* Section content */}
-            {sectionTasks.length === 0 ? (
-              <EmptyState
-                title={SECTION_EMPTY_TITLES[key]}
-                description={SECTION_EMPTY_DESCRIPTIONS[key]}
-                action={
-                  key === 'today'
-                    ? {
-                        label: 'Create Task',
-                        onClick: openCreateDialog,
-                      }
-                    : undefined
-                }
-              />
-            ) : (
-              <div className="space-y-2">
-                {sectionTasks.map((task) => (
-                  <TodoCard
-                    key={task.id}
-                    task={task}
-                    onEdit={setEditingTask}
-                    onDelete={setDeletingTask}
-                    onToggleComplete={toggleComplete}
-                    isCompleting={isCompleting}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-        ))}
+        {/* Whiteboard sections */}
+        <SectionPanel
+          sectionKey="today"
+          tasks={sections.today}
+          onEdit={setEditingTask}
+          onDelete={setDeletingTask}
+          onToggleComplete={toggleComplete}
+          isCompleting={isCompleting}
+          onCreateClick={openCreateDialog}
+        />
+        <SectionPanel
+          sectionKey="week"
+          tasks={sections.week}
+          onEdit={setEditingTask}
+          onDelete={setDeletingTask}
+          onToggleComplete={toggleComplete}
+          isCompleting={isCompleting}
+        />
+        <SectionPanel
+          sectionKey="later"
+          tasks={sections.later}
+          onEdit={setEditingTask}
+          onDelete={setDeletingTask}
+          onToggleComplete={toggleComplete}
+          isCompleting={isCompleting}
+        />
       </div>
 
       {/* Edit dialog */}
@@ -125,14 +98,14 @@ export function CardStream() {
         onOpenChange={(open) => {
           if (!open) setDeletingTask(null)
         }}
-        title="Delete Task"
+        title={t.todo.deleteTitle}
         description={
           deletingTask
-            ? `Delete "${deletingTask.title}"? This action cannot be undone.`
+            ? t.todo.deleteConfirm.replace('{title}', deletingTask.title)
             : ''
         }
         variant="danger"
-        confirmLabel="Delete"
+        confirmLabel={t.todo.delete}
         loading={deleteTask.isPending}
         onConfirm={() => {
           if (deletingTask) {

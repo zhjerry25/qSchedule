@@ -24,10 +24,10 @@ export function createPopupWindow(callbacks: PopupWindowCallbacks): BrowserWindo
     skipTaskbar: true,
     alwaysOnTop: true,
     hasShadow: true,
-    type: 'panel',
+    ...(process.platform === 'darwin' ? { type: 'panel' as const } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false,
+      sandbox: true,
     },
   })
 

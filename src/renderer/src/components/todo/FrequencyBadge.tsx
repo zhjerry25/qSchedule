@@ -1,4 +1,5 @@
-import { FREQUENCY_LABELS, FREQUENCY_COLORS } from '../../lib/constants'
+import { FREQUENCY_COLORS } from '../../lib/constants'
+import { useI18n } from '../../i18n'
 import type { Frequency } from '@shared/task'
 
 interface FrequencyBadgeProps {
@@ -8,6 +9,7 @@ interface FrequencyBadgeProps {
 
 export function FrequencyBadge({ frequency, className = '' }: FrequencyBadgeProps) {
   const colors = FREQUENCY_COLORS[frequency]
+  const { t } = useI18n()
 
   return (
     <span
@@ -18,7 +20,7 @@ export function FrequencyBadge({ frequency, className = '' }: FrequencyBadgeProp
         className,
       ].join(' ')}
     >
-      {FREQUENCY_LABELS[frequency]}
+      {t.frequency[frequency]}
     </span>
   )
 }

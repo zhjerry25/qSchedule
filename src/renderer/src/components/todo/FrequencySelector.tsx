@@ -1,4 +1,4 @@
-import { FREQUENCY_LABELS } from '../../lib/constants'
+import { useI18n } from '../../i18n'
 import type { Frequency } from '@shared/task'
 
 const FREQUENCIES: Frequency[] = ['once', 'daily', 'weekly', 'deadline']
@@ -14,8 +14,10 @@ export function FrequencySelector({
   onChange,
   disabled = false,
 }: FrequencySelectorProps) {
+  const { t } = useI18n()
+
   return (
-    <div className="inline-flex" role="radiogroup" aria-label="Frequency">
+    <div className="inline-flex" role="radiogroup" aria-label={t.todo.frequency}>
       {FREQUENCIES.map((freq, i) => {
         const isActive = value === freq
         const isFirst = i === 0
@@ -41,7 +43,7 @@ export function FrequencySelector({
               disabled && 'opacity-50 pointer-events-none',
             ].join(' ')}
           >
-            {FREQUENCY_LABELS[freq]}
+            {t.frequency[freq]}
           </button>
         )
       })}
