@@ -1,6 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
 import { useUIStore } from '../../stores/ui-store'
-import { taskApi } from '../../lib/ipc'
+import { useTaskCounts } from '../../hooks/useTasks'
 import { VIEWS, VIEW_LABELS } from '../../lib/constants'
 import type { View } from '../../lib/constants'
 
@@ -9,26 +8,12 @@ export function Sidebar() {
   const setActiveView = useUIStore((s) => s.setActiveView)
   const openSettings = useUIStore((s) => s.openSettings)
 
-  // Count queries for nav badges
-  const { data: todayData } = useQuery({
-    queryKey: ['tasks', 'count', 'today'],
-    queryFn: () => taskApi.list({ kind: 'todo', view: 'today' }),
-  })
-
-  const { data: weekData } = useQuery({
-    queryKey: ['tasks', 'count', 'week'],
-    queryFn: () => taskApi.list({ kind: 'todo', view: 'week' }),
-  })
-
-  const { data: allData } = useQuery({
-    queryKey: ['tasks', 'count', 'all'],
-    queryFn: () => taskApi.list({ kind: 'todo' }),
-  })
+  const { today, week, all } = useTaskCounts()
 
   const counts: Record<View, number> = {
-    today: todayData?.length ?? 0,
-    week: weekData?.length ?? 0,
-    all: allData?.length ?? 0,
+    today,
+    week,
+    all,
   }
 
   const activeStyle =
