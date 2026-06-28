@@ -1,5 +1,8 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow } from 'electron'
 import { join } from 'path'
+import { runMigrations } from './database/migrations'
+import { registerIpcHandlers } from './ipc'
+import { closeDatabase } from './database/connection'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -13,8 +16,8 @@ function createMainWindow(): BrowserWindow {
     titleBarStyle: 'hiddenInset',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
-    }
+      sandbox: false,
+    },
   })
 
   win.on('ready-to-show', () => {
@@ -38,10 +41,14 @@ function createMainWindow(): BrowserWindow {
   return win
 }
 
-// Simple ping IPC for testing
-ipcMain.handle('ping', () => 'pong')
-
 app.whenReady().then(() => {
+  // Initialize database and run migrations
+  runMigrations()
+
+  // Register all IPC handlers (task + tag + ping)
+  registerIpcHandlers()
+
+  // Create main window
   mainWindow = createMainWindow()
 
   app.on('activate', () => {
@@ -61,4 +68,5 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   mainWindow = null
+  closeDatabase()
 })

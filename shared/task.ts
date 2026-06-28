@@ -39,6 +39,7 @@ export interface TagBasic {
 }
 
 export interface CreateTaskInput {
+  id?: string
   title: string
   description?: string
   kind: TaskKind
