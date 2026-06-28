@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { TodoCheckbox } from './TodoCheckbox'
 import { FrequencyBadge } from './FrequencyBadge'
+import { TagList } from '../tags/TagList'
 import { useCompleteTask } from '../../hooks/useCompleteTask'
 import type { TaskWithTags } from '@shared/task'
 
@@ -86,16 +87,8 @@ export function TodoCard({ task, onEdit, onDelete }: TodoCardProps) {
           <div className="mt-2 flex items-center gap-2 flex-wrap">
             <FrequencyBadge frequency={task.frequency} />
 
-            {/* Tags (rendered as simple chips until Phase 5 TagBadge) */}
-            {task.tags.map((tag) => (
-              <span
-                key={tag.id}
-                className="text-xs text-neutral-400"
-                style={{ color: tag.color }}
-              >
-                #{tag.name}
-              </span>
-            ))}
+            {/* Tags */}
+            <TagList tags={task.tags} />
 
             {/* Date */}
             {dateLabel && (

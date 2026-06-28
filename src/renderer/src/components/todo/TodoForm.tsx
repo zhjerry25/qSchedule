@@ -1,12 +1,19 @@
 import { useState, useEffect } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Input } from '../ui/Input'
 import { Textarea } from '../ui/Textarea'
 import { FrequencySelector } from './FrequencySelector'
 import { DatePicker } from './DatePicker'
+import { TagInput } from '../tags/TagInput'
 import { useTaskMutations } from '../../hooks/useTaskMutations'
+import { useTags } from '../../hooks/useTags'
+import { useTagMutations } from '../../hooks/useTagMutations'
 import { todayISO } from '../../lib/date-utils'
+import { assignColor } from '../../lib/color-palette'
+import { tagApi } from '../../lib/ipc'
 import type { Frequency, TaskWithTags } from '@shared/task'
+import type { Tag } from '@shared/tag'
 
 interface TodoFormProps {
   open: boolean
@@ -17,6 +24,16 @@ interface TodoFormProps {
 export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
   const isEdit = task !== undefined
   const { createTask, updateTask } = useTaskMutations()
+  const { tags: allTags } = useTags()
+  const { createTag } = useTagMutations()
+  const queryClient = useQueryClient()
+
+  // Load existing tags when editing a task
+  const { data: existingTags = [] } = useQuery({
+    queryKey: ['tags', 'for-task', task?.id],
+    queryFn: () => tagApi.getForTask(task!.id),
+    enabled: isEdit && open,
+  })
 
   // ── Form state ──
   const [title, setTitle] = useState('')
@@ -24,6 +41,7 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
   const [scheduledDate, setScheduledDate] = useState<string | null>(null)
   const [deadlineDate, setDeadlineDate] = useState<string | null>(null)
   const [description, setDescription] = useState('')
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([])
 
   // ── Reset form on open / task change ──
   useEffect(() => {
@@ -33,42 +51,90 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
       setScheduledDate(task?.scheduled_date ?? null)
       setDeadlineDate(task?.deadline ?? null)
       setDescription(task?.description ?? '')
+      setSelectedTags([])
     }
   }, [open, task])
 
+  // ── Sync tags from DB when editing (runs when existingTags resolves) ──
+  useEffect(() => {
+    if (isEdit && existingTags.length > 0) {
+      setSelectedTags(existingTags)
+    }
+  }, [isEdit, existingTags])
+
   // ── Derived ──
   const titleValid = title.trim().length > 0
-  const isPending = createTask.isPending || updateTask.isPending
+  const isPending = createTask.isPending || updateTask.isPending || createTag.isPending
+
+  // ── Tag helpers ──
+
+  const handleCreateTag = async (name: string): Promise<Tag> => {
+    const color = assignColor(name)
+    return await createTag.mutateAsync({ name, color })
+  }
+
+  async function syncTags(
+    taskId: string,
+    oldTags: Tag[],
+    newTags: Tag[],
+  ): Promise<void> {
+    const oldIds = new Set(oldTags.map((t) => t.id))
+    const newIds = new Set(newTags.map((t) => t.id))
+
+    for (const tag of newTags) {
+      if (!oldIds.has(tag.id)) {
+        await tagApi.addToTask(taskId, tag.id)
+      }
+    }
+    for (const tag of oldTags) {
+      if (!newIds.has(tag.id)) {
+        await tagApi.removeFromTask(taskId, tag.id)
+      }
+    }
+  }
 
   // ── Submit ──
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!titleValid) return
 
-    if (isEdit) {
-      updateTask.mutate({
-        id: task!.id,
-        input: {
+    try {
+      if (isEdit) {
+        await updateTask.mutateAsync({
+          id: task!.id,
+          input: {
+            title: title.trim(),
+            description: description.trim() || undefined,
+            frequency,
+            scheduled_date: frequency === 'once' ? scheduledDate : null,
+            deadline: frequency === 'deadline' ? deadlineDate : null,
+          },
+        })
+        // Diff and sync tags
+        await syncTags(task!.id, existingTags, selectedTags)
+      } else {
+        const newTask = await createTask.mutateAsync({
+          id: crypto.randomUUID(),
           title: title.trim(),
-          description: description.trim() || undefined,
+          kind: 'todo',
           frequency,
-          scheduled_date: frequency === 'once' ? scheduledDate : null,
+          description: description.trim() || undefined,
+          scheduled_date:
+            frequency === 'once' ? (scheduledDate ?? todayISO()) : null,
           deadline: frequency === 'deadline' ? deadlineDate : null,
-        },
-      })
-    } else {
-      createTask.mutate({
-        id: crypto.randomUUID(),
-        title: title.trim(),
-        kind: 'todo',
-        frequency,
-        description: description.trim() || undefined,
-        scheduled_date:
-          frequency === 'once' ? (scheduledDate ?? todayISO()) : null,
-        deadline: frequency === 'deadline' ? deadlineDate : null,
-      })
-    }
+        })
+        // Assign all selected tags to the new task
+        for (const tag of selectedTags) {
+          await tagApi.addToTask(newTask.id, tag.id)
+        }
+      }
 
-    onOpenChange(false)
+      // Refresh task list to show updated tags
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      onOpenChange(false)
+    } catch {
+      // Task-level mutation errors are surfaced via mutation.error below.
+      // Tag sync errors are silently handled — the task data is already saved.
+    }
   }
 
   // ── Error display ──
@@ -156,6 +222,20 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Add details..."
                 disabled={isPending}
+              />
+            </div>
+
+            {/* Tags */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
+                Tags{' '}
+                <span className="text-neutral-400 font-normal">(optional)</span>
+              </label>
+              <TagInput
+                value={selectedTags}
+                onChange={setSelectedTags}
+                existingTags={allTags}
+                onCreateTag={handleCreateTag}
               />
             </div>
 

@@ -1,4 +1,5 @@
 import { useUIStore } from '../../stores/ui-store'
+import { TagFilter } from '../tags/TagFilter'
 
 // WebkitAppRegion is a macOS Electron property not in React's CSSProperties
 const DRAG = { WebkitAppRegion: 'drag' } as React.CSSProperties
@@ -7,6 +8,8 @@ const NO_DRAG = { WebkitAppRegion: 'no-drag' } as React.CSSProperties
 export function Sidebar() {
   const openCreateDialog = useUIStore((s) => s.openCreateDialog)
   const openSettings = useUIStore((s) => s.openSettings)
+  const selectedTagIds = useUIStore((s) => s.selectedTagIds)
+  const clearTagFilters = useUIStore((s) => s.clearTagFilters)
 
   return (
     <aside className="w-[280px] h-screen flex flex-col bg-white border-r border-neutral-200 select-none">
@@ -20,13 +23,23 @@ export function Sidebar() {
         </span>
       </header>
 
-      {/* Tag filter area — Phase 5 will expand this */}
+      {/* Tag filter area */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto" style={NO_DRAG}>
         <div className="px-3 py-1">
-          <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider">
-            Tags
-          </p>
-          <p className="mt-2 text-xs text-neutral-300 italic">No tags yet</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider">
+              Tags
+            </p>
+            {selectedTagIds.length > 0 && (
+              <button
+                onClick={clearTagFilters}
+                className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <TagFilter />
         </div>
       </nav>
 
