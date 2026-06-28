@@ -106,6 +106,7 @@ export interface Translations {
     saving: string
     deleteTask: string
     deleteConfirm: string
+    columnTask: string
     today: string
     zoomDay: string
     zoomWeek: string

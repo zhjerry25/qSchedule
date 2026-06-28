@@ -41,28 +41,9 @@ export const updateTaskInputSchema = z.object({
   }),
 })
 
-// ── TaskFilter ──
-export const taskFilterSchema = z.object({
-  kind: taskKindSchema.optional(),
-  frequency: frequencySchema.optional(),
-  view: z.enum(['today', 'week', 'all']).optional(),
-  tagIds: z.array(z.string()).optional(),
-})
-
 // ── Tag Create ──
 export const tagCreateSchema = z.object({
   name: z.string().min(1, 'Tag name is required'),
   color: z.string().min(1, 'Tag color is required'),
 })
 
-// ── Tag Update ──
-export const tagUpdateSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1, 'Tag name is required'),
-})
-
-// ── Task-Tag Junction ──
-export const taskTagSchema = z.object({
-  taskId: z.string().min(1),
-  tagId: z.string().min(1),
-})

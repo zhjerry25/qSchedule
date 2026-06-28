@@ -2,7 +2,7 @@ import type { Translations } from '../types'
 
 export const en: Translations = {
   app: {
-    name: 'Time Planner',
+    name: 'qSchedule',
     loading: 'Loading...',
     error: 'Error',
     reload: 'Reload',
@@ -86,7 +86,7 @@ export const en: Translations = {
     openMain: 'Open Main',
     todaysTasks: "Today's Tasks",
     quit: 'Quit',
-    tooltip: 'Time Planner',
+    tooltip: 'qSchedule',
   },
   nav: {
     tasks: 'Tasks',
@@ -115,6 +115,7 @@ export const en: Translations = {
     saving: 'Saving...',
     deleteTask: 'Delete Gantt Task',
     deleteConfirm: 'Delete "{title}"? This action cannot be undone.',
+    columnTask: 'Task',
     today: 'Today',
     zoomDay: 'Day',
     zoomWeek: 'Week',

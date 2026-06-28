@@ -4,6 +4,7 @@ import { GanttTimeline } from './GanttTimeline'
 import type { GanttZoom } from '../../hooks/useGanttLayout'
 import type { TaskWithTags } from '@shared/task'
 import { startOfDay, addDays } from '../../lib/date-utils'
+import { useI18n } from '../../i18n'
 
 interface GanttPanelProps {
   tasks: TaskWithTags[]
@@ -14,10 +15,10 @@ interface GanttPanelProps {
   onCreateDependency: (childId: string, parentId: string) => void
 }
 
-function formatRange(start: Date, end: Date): string {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-  const s = `${months[start.getMonth()]} ${start.getDate()}`
-  const e = `${months[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`
+function formatRange(start: Date, end: Date, locale?: string): string {
+  const loc = locale ?? 'en-US'
+  const s = start.toLocaleDateString(loc, { month: 'short', day: 'numeric' })
+  const e = end.toLocaleDateString(loc, { month: 'short', day: 'numeric', year: 'numeric' })
   return `${s} – ${e}`
 }
 
@@ -28,6 +29,7 @@ const ZOOM_SPAN: Record<GanttZoom, number> = {
 }
 
 export function GanttPanel({ tasks, onAddTask, onEditTask, onDeleteTask, onUpdateTask, onCreateDependency }: GanttPanelProps) {
+  const { t, locale } = useI18n()
   const [zoom, setZoom] = useState<GanttZoom>('week')
   const [visibleStart, setVisibleStart] = useState<Date>(() => {
     // Start 2 weeks before today for week view
@@ -42,7 +44,7 @@ export function GanttPanel({ tasks, onAddTask, onEditTask, onDeleteTask, onUpdat
   )
 
   const dateRangeLabel = useMemo(
-    () => formatRange(visibleStart, visibleEnd),
+    () => formatRange(visibleStart, visibleEnd, locale),
     [visibleStart, visibleEnd],
   )
 
@@ -80,7 +82,7 @@ export function GanttPanel({ tasks, onAddTask, onEditTask, onDeleteTask, onUpdat
       />
       {tasks.length === 0 ? (
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-sm text-neutral-400">No tasks in this date range</p>
+          <p className="text-sm text-neutral-400">{t.gantt.noTasks}</p>
         </div>
       ) : (
         <GanttTimeline

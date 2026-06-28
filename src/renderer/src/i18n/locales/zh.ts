@@ -2,7 +2,7 @@ import type { Translations } from '../types'
 
 export const zh: Translations = {
   app: {
-    name: '时间规划',
+    name: 'qSchedule',
     loading: '加载中...',
     error: '错误',
     reload: '重新加载',
@@ -86,7 +86,7 @@ export const zh: Translations = {
     openMain: '打开主窗口',
     todaysTasks: '今日任务',
     quit: '退出',
-    tooltip: '时间规划',
+    tooltip: 'qSchedule',
   },
   nav: {
     tasks: '任务',
@@ -115,6 +115,7 @@ export const zh: Translations = {
     saving: '保存中...',
     deleteTask: '删除甘特图任务',
     deleteConfirm: '确定删除"{title}"？此操作不可撤销。',
+    columnTask: '任务',
     today: '今天',
     zoomDay: '日',
     zoomWeek: '周',

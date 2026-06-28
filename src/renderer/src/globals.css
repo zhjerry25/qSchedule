@@ -6,19 +6,6 @@
   /* Continuous curve corner radius */
   --radius-smooth: 0.875rem;
 
-  /* Tag palette colors (light, pastel) */
-  --tag-amber: #FEF3C7;
-  --tag-emerald: #D1FAE5;
-  --tag-violet: #EDE9FE;
-  --tag-rose: #FEE2E2;
-  --tag-blue: #DBEAFE;
-  --tag-pink: #FCE7F3;
-  --tag-indigo: #E0E7FF;
-  --tag-teal: #CCFBF1;
-  --tag-yellow: #FEF9C3;
-  --tag-purple: #F3E8FF;
-  --tag-orange: #FFEDD5;
-  --tag-lime: #ECFCCB;
 }
 
 * {

@@ -30,5 +30,3 @@ export const Channels = {
   TAG_REMOVE_FROM_TASK: 'tag:remove-from-task',
   TAG_GET_FOR_TASK: 'tag:get-for-task',
 } as const
-
-export type ChannelName = (typeof Channels)[keyof typeof Channels]

@@ -20,12 +20,12 @@ export function DatePicker({
   disabled = false,
   minDate,
 }: DatePickerProps) {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const selected = value ? new Date(value + 'T00:00:00') : undefined
   const defaultPlaceholder = placeholder ?? t.todo.pickDate
   const displayText = (() => {
     if (!value) return defaultPlaceholder
-    const sd = formatSmartDate(value, { includeWeekday: true })
+    const sd = formatSmartDate(value, { includeWeekday: true, locale })
     if (!sd) return value
     switch (sd.kind) {
       case 'today': return t.todo.today

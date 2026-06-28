@@ -8,12 +8,12 @@ export const TRAY_STRINGS: Record<string, Record<string, string>> = {
     openMain: 'Open Main',
     todaysTasks: "Today's Tasks",
     quit: 'Quit',
-    tooltip: 'Time Planner',
+    tooltip: 'qSchedule',
   },
   zh: {
     openMain: '打开主窗口',
     todaysTasks: '今日任务',
     quit: '退出',
-    tooltip: '时间规划',
+    tooltip: 'qSchedule',
   },
 }

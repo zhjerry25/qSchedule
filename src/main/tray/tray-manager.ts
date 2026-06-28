@@ -125,7 +125,7 @@ const CLICK_INTERVAL_MS = 250
 
 /** globalThis sentinel to prevent duplicate Tray creation across HMR reloads.
  * Symbol.for ensures the same key even after module re-evaluation. */
-const TRAY_INIT_GUARD = Symbol.for('time-planner:tray-initialized')
+const TRAY_INIT_GUARD = Symbol.for('qschedule:tray-initialized')
 
 export class TrayManager {
   private tray: Tray | null = null

@@ -19,6 +19,7 @@ export function createPopupWindow(callbacks: PopupWindowCallbacks): BrowserWindo
     height: POPUP_HEIGHT,
     maxHeight: POPUP_MAX_HEIGHT,
     show: false,
+    title: 'qSchedule',
     frame: false,
     resizable: false,
     skipTaskbar: true,

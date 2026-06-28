@@ -1,7 +1,7 @@
 {
-  "name": "time-planner",
-  "version": "0.1.0",
-  "description": "个人时间规划工具 — Todo 清单与甘特图",
+  "name": "qschedule",
+  "version": "0.2.0",
+  "description": "qSchedule — personal time planner with Todo list & Gantt chart",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
@@ -11,7 +11,12 @@
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:linux": "npm run build && electron-builder --linux"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.5",

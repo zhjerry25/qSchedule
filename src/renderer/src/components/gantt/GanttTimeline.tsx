@@ -8,6 +8,7 @@ import { useGanttLayout, ROW_HEIGHT, HEADER_HEIGHT } from '../../hooks/useGanttL
 import type { GanttZoom, BarPosition } from '../../hooks/useGanttLayout'
 import type { TaskWithTags } from '@shared/task'
 import { startOfDay, daysBetween } from '../../lib/date-utils'
+import { useI18n } from '../../i18n'
 
 // ── Drag types ──
 
@@ -73,6 +74,7 @@ export function GanttTimeline({
   onDeleteTask,
   scrollToTodaySignal,
 }: GanttTimelineProps) {
+  const { t } = useI18n()
   const layout = useGanttLayout({ tasks, zoom, visibleStart, visibleEnd })
   const svgRef = useRef<SVGSVGElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -305,7 +307,7 @@ export function GanttTimeline({
           className="flex items-center px-3 border-b border-neutral-100 bg-neutral-50 text-xs font-medium text-neutral-400 uppercase tracking-wider"
           style={{ height: HEADER_HEIGHT }}
         >
-          Task
+          {t.gantt.columnTask}
         </div>
         {layout.taskRows.map(({ task }) => (
           <div
@@ -381,6 +383,7 @@ export function GanttTimeline({
             x={offsetX(layout.todayX)}
             y1={HEADER_HEIGHT}
             y2={layout.totalHeight}
+            label={t.gantt.today}
           />
 
           {/* Existing dependency lines */}

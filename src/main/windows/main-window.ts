@@ -16,6 +16,7 @@ export function createMainWindow(callbacks: MainWindowCallbacks): BrowserWindow 
     minWidth: 800,
     minHeight: 500,
     show: false,
+    title: 'qSchedule',
     titleBarStyle: 'hiddenInset',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),

@@ -2,12 +2,13 @@ interface GanttTodayLineProps {
   x: number
   y1: number
   y2: number
+  label?: string
 }
 
 /**
  * Dashed vertical line marking today's date on the Gantt timeline.
  */
-export function GanttTodayLine({ x, y1, y2 }: GanttTodayLineProps) {
+export function GanttTodayLine({ x, y1, y2, label }: GanttTodayLineProps) {
   return (
     <g>
       <line
@@ -39,7 +40,7 @@ export function GanttTodayLine({ x, y1, y2 }: GanttTodayLineProps) {
         className="select-none pointer-events-none"
         style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 500 }}
       >
-        Today
+        {label ?? 'Today'}
       </text>
     </g>
   )

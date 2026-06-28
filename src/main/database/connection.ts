@@ -7,7 +7,7 @@ let db: Database.Database | null = null
 export function getDatabase(): Database.Database {
   if (db) return db
 
-  const dbPath = join(app.getPath('userData'), 'time-planner.db')
+  const dbPath = join(app.getPath('userData'), 'qschedule.db')
   db = new Database(dbPath)
 
   // Enable WAL mode for better concurrent read performance

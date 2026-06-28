@@ -253,7 +253,7 @@ export function GanttForm({ open, onOpenChange, task }: GanttFormProps) {
             {isMilestone && (
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">
-                  {t.gantt.milestoneDate || 'Milestone Date'}
+                  {t.gantt.milestoneDate}
                 </label>
                 <DatePicker
                   value={milestoneDate}

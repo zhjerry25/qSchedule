@@ -101,7 +101,7 @@ export type SmartDate =
  */
 export function formatSmartDate(
   dateStr: string | null,
-  options?: { includeWeekday?: boolean },
+  options?: { includeWeekday?: boolean; locale?: string },
 ): SmartDate | null {
   if (!dateStr) return null
   const date = new Date(dateStr.slice(0, 10) + 'T00:00:00')
@@ -125,7 +125,7 @@ export function formatSmartDate(
   if (options?.includeWeekday) {
     localeOptions.weekday = 'short'
   }
-  return { kind: 'date', label: date.toLocaleDateString('en-US', localeOptions) }
+  return { kind: 'date', label: date.toLocaleDateString(options?.locale ?? 'en-US', localeOptions) }
 }
 
 /**
@@ -193,15 +193,4 @@ export function partitionTasks(tasks: TaskWithTags[]): TaskSections {
   }
 
   return { today: todayTasks, week: weekTasks, later: laterTasks }
-}
-
-/**
- * Get the count of tasks in a specific section.
- */
-export function getSectionCount(
-  tasks: TaskWithTags[],
-  section: SectionKey,
-): number {
-  const sections = partitionTasks(tasks)
-  return sections[section].length
 }
