@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import { useTags } from '../../hooks/useTags'
+import { useTagMutations } from '../../hooks/useTagMutations'
 import { useUIStore } from '../../stores/ui-store'
 import { useI18n } from '../../i18n'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
 
 interface TagFilterProps {
   className?: string
@@ -13,9 +16,11 @@ interface TagFilterProps {
  */
 export function TagFilter({ className = '' }: TagFilterProps) {
   const { tags, isLoading, isError } = useTags()
+  const { deleteTag } = useTagMutations()
   const selectedTagIds = useUIStore((s) => s.selectedTagIds)
   const toggleTagFilter = useUIStore((s) => s.toggleTagFilter)
   const { t } = useI18n()
+  const [deletingTagId, setDeletingTagId] = useState<string | null>(null)
 
   // ── Loading state ──
   if (isLoading) {
@@ -59,7 +64,7 @@ export function TagFilter({ className = '' }: TagFilterProps) {
             key={tag.id}
             type="button"
             onClick={() => toggleTagFilter(tag.id)}
-            className={`flex items-center gap-2 w-full px-3 py-1.5 rounded-smooth text-left transition-colors cursor-pointer ${
+            className={`group flex items-center gap-2 w-full px-3 py-1.5 rounded-smooth text-left transition-colors cursor-pointer ${
               isSelected
                 ? 'bg-neutral-100 text-neutral-800'
                 : 'text-neutral-600 hover:bg-neutral-50'
@@ -77,16 +82,54 @@ export function TagFilter({ className = '' }: TagFilterProps) {
             {/* Checkmark when selected */}
             {isSelected && (
               <svg
-                className="ml-auto w-3.5 h-3.5 text-neutral-400 flex-shrink-0"
+                className="w-3.5 h-3.5 text-neutral-400 flex-shrink-0"
                 viewBox="0 0 16 16"
                 fill="currentColor"
               >
                 <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z" />
               </svg>
             )}
+            {/* Delete button — visible on row hover */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setDeletingTagId(tag.id)
+              }}
+              className="ml-auto w-5 h-5 flex items-center justify-center rounded-full text-neutral-300 hover:text-rose-500 hover:bg-rose-50 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+              aria-label={t.tag.deleteTag}
+            >
+              ×
+            </button>
           </button>
         )
       })}
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        open={deletingTagId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeletingTagId(null)
+        }}
+        title={t.tag.deleteTag}
+        description={
+          deletingTagId
+            ? t.tag.deleteTagConfirm.replace(
+                '{name}',
+                tags.find((t) => t.id === deletingTagId)?.name ?? '',
+              )
+            : ''
+        }
+        variant="danger"
+        confirmLabel={t.todo.delete}
+        loading={deleteTag.isPending}
+        onConfirm={() => {
+          if (deletingTagId) {
+            deleteTag.mutate(deletingTagId)
+            setDeletingTagId(null)
+          }
+        }}
+      />
     </div>
   )
 }

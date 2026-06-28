@@ -27,6 +27,7 @@ export const zh: Translations = {
     laterDesc: '没有计划中的事项',
     createTask: '创建任务',
     noTags: '暂无标签',
+    noTasks: '没有任务',
     popupAllClear: '今天全部完成 ✓',
   },
   todo: {
@@ -63,6 +64,8 @@ export const zh: Translations = {
     create: '创建"{name}"',
     creating: '创建中...',
     clear: '清除',
+    deleteTag: '删除标签',
+    deleteTagConfirm: '确定删除标签"{name}"？将从所有任务中移除。',
     failedToLoad: '加载标签失败',
     noTags: '暂无标签',
   },

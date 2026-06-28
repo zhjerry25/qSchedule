@@ -18,6 +18,7 @@ export interface Translations {
     laterDesc: string
     createTask: string
     noTags: string
+    noTasks: string
     popupAllClear: string
   }
   todo: {
@@ -54,6 +55,8 @@ export interface Translations {
     create: string
     creating: string
     clear: string
+    deleteTag: string
+    deleteTagConfirm: string
     failedToLoad: string
     noTags: string
   }

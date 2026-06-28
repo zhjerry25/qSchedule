@@ -15,10 +15,17 @@ interface TodoCardProps {
 
 export function TodoCard({ task, onEdit, onDelete, onToggleComplete, isCompleting }: TodoCardProps) {
   const { t } = useI18n()
-  const dateDisplay = formatSmartDate(task.scheduled_date ?? task.deadline)
-  const dateLabel = task.frequency === 'deadline' && dateDisplay
-    ? `${t.todo.due} ${dateDisplay}`
-    : dateDisplay
+  const smartDate = formatSmartDate(task.scheduled_date ?? task.deadline)
+  const dateLabel = (() => {
+    if (!smartDate) return null
+    const prefix = task.frequency === 'deadline' ? `${t.todo.due} ` : ''
+    switch (smartDate.kind) {
+      case 'today': return `${prefix}${t.todo.today}`
+      case 'tomorrow': return `${prefix}${t.todo.tomorrow}`
+      case 'yesterday': return `${prefix}${t.todo.yesterday}`
+      case 'date': return `${prefix}${smartDate.label}`
+    }
+  })()
 
   return (
     <div

@@ -51,3 +51,15 @@ app.on('before-quit', () => {
   trayManager = null
   closeDatabase()
 })
+
+// Clean up TrayManager before HMR replaces this module.
+// Prevents duplicate tray icons by destroying the old instance first.
+const hot = (import.meta as any).hot as
+  | { dispose(cb: () => void): void }
+  | undefined
+if (hot) {
+  hot.dispose(() => {
+    trayManager?.destroy()
+    trayManager = null
+  })
+}

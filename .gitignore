@@ -12,3 +12,4 @@ dist/
 *.db-journal
 .DS_Store
 ISSUES.md
+TRANSFER.md

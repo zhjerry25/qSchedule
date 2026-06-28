@@ -45,7 +45,7 @@ export function FrequencyCard({
       <div className="px-2 py-1 max-h-[240px] overflow-y-auto">
         {tasks.length === 0 ? (
           <p className="text-xs text-neutral-300 italic px-2 py-3 text-center">
-            {t.empty.noTags || 'No tasks'}
+            {t.empty.noTasks}
           </p>
         ) : (
           <div className="space-y-0.5">
@@ -64,14 +64,21 @@ export function FrequencyCard({
                   onChange={() => onToggleComplete(task)}
                   disabled={isCompleting}
                 />
-                <span
-                  className={[
-                    'flex-1 text-sm text-neutral-800 truncate',
-                    task.completed && 'line-through text-neutral-400',
-                  ].join(' ')}
-                >
-                  {task.title}
-                </span>
+                <div className="flex-1 min-w-0">
+                  <span
+                    className={[
+                      'text-sm text-neutral-800 truncate block',
+                      task.completed && 'line-through text-neutral-400',
+                    ].join(' ')}
+                  >
+                    {task.title}
+                  </span>
+                  {task.description && (
+                    <span className="text-[11px] text-neutral-400 truncate block mt-0.5">
+                      {task.description}
+                    </span>
+                  )}
+                </div>
                 <TagList tags={task.tags.slice(0, 2)} />
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                   <button

@@ -1,24 +1,6 @@
 import type { Frequency } from '@shared/task'
 
-// ── View System ──
-
-export const VIEWS = ['today', 'week', 'all'] as const
-export type View = (typeof VIEWS)[number]
-
-export const VIEW_LABELS: Record<View, string> = {
-  today: 'Today',
-  week: 'This Week',
-  all: 'All',
-}
-
-// ── Frequency Display ──
-
-export const FREQUENCY_LABELS: Record<Frequency, string> = {
-  once: 'Once',
-  daily: 'Daily',
-  weekly: 'Weekly',
-  deadline: 'Deadline',
-}
+// ── Frequency Display Colors ──
 
 export const FREQUENCY_COLORS: Record<
   Frequency,
@@ -46,30 +28,6 @@ export const FREQUENCY_COLORS: Record<
   },
 }
 
-// ── Layout ──
+// ── CardStream Section Keys ──
 
-export const SIDEBAR_WIDTH = 'w-[280px]'
-export const CONTENT_MAX_WIDTH = 'max-w-2xl'
-
-// ── CardStream Sections ──
-
-export const SECTIONS = ['today', 'week', 'later'] as const
-export type SectionKey = (typeof SECTIONS)[number]
-
-export const SECTION_LABELS: Record<SectionKey, string> = {
-  today: 'Today',
-  week: 'This Week',
-  later: 'Later',
-}
-
-export const SECTION_EMPTY_TITLES: Record<SectionKey, string> = {
-  today: 'No tasks for today',
-  week: 'No tasks this week',
-  later: 'No upcoming tasks',
-}
-
-export const SECTION_EMPTY_DESCRIPTIONS: Record<SectionKey, string> = {
-  today: 'Everything is clear for today',
-  week: 'Your week is open',
-  later: 'Nothing planned ahead',
-}
+export type SectionKey = 'today' | 'week' | 'later'

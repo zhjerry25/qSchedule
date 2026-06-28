@@ -20,9 +20,17 @@ export function DatePicker({
   const { t } = useI18n()
   const selected = value ? new Date(value + 'T00:00:00') : undefined
   const defaultPlaceholder = placeholder ?? t.todo.pickDate
-  const displayText = value
-    ? (formatSmartDate(value, { includeWeekday: true }) ?? value)
-    : defaultPlaceholder
+  const displayText = (() => {
+    if (!value) return defaultPlaceholder
+    const sd = formatSmartDate(value, { includeWeekday: true })
+    if (!sd) return value
+    switch (sd.kind) {
+      case 'today': return t.todo.today
+      case 'tomorrow': return t.todo.tomorrow
+      case 'yesterday': return t.todo.yesterday
+      case 'date': return sd.label
+    }
+  })()
 
   return (
     <Popover.Root>

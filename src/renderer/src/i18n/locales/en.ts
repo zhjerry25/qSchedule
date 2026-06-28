@@ -27,6 +27,7 @@ export const en: Translations = {
     laterDesc: 'Nothing planned ahead',
     createTask: 'Create Task',
     noTags: 'No tags yet',
+    noTasks: 'No tasks',
     popupAllClear: 'All clear for today',
   },
   todo: {
@@ -63,6 +64,8 @@ export const en: Translations = {
     create: 'Create "{name}"',
     creating: 'Creating...',
     clear: 'Clear',
+    deleteTag: 'Delete tag',
+    deleteTagConfirm: 'Delete tag "{name}"? It will be removed from all tasks.',
     failedToLoad: 'Failed to load tags',
     noTags: 'No tags yet',
   },

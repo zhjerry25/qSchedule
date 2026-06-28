@@ -123,6 +123,10 @@ const crcTable: number[] = (() => {
 
 const CLICK_INTERVAL_MS = 250
 
+/** globalThis sentinel to prevent duplicate Tray creation across HMR reloads.
+ * Symbol.for ensures the same key even after module re-evaluation. */
+const TRAY_INIT_GUARD = Symbol.for('time-planner:tray-initialized')
+
 export class TrayManager {
   private tray: Tray | null = null
   private mainWindow: BrowserWindow | null = null
@@ -139,6 +143,14 @@ export class TrayManager {
   // ── Initialization ──
 
   init(): void {
+    // Prevent duplicate tray creation on HMR reload.
+    // The native Electron Tray survives module re-evaluation; if a Tray
+    // already exists from a prior lifecycle, skip creation.
+    if ((globalThis as any)[TRAY_INIT_GUARD]) {
+      return
+    }
+    (globalThis as any)[TRAY_INIT_GUARD] = true
+
     // Main window is lazy-created on first showMainWindow() call.
     // This reduces startup resource consumption — the popup and tray
     // provide the primary interaction surface.
@@ -148,10 +160,10 @@ export class TrayManager {
       this.tray = new Tray(createTrayIcon())
       this.tray.setToolTip(TRAY_STRINGS[this.locale]?.tooltip ?? 'Time Planner')
 
-      // Tray click: single vs double-click detection via 300ms timer
+      // Tray click: single vs double-click detection via 250ms timer
       this.tray.on('click', (_event, bounds) => {
         if (this.clickTimer) {
-          // Second click within 300ms → double-click
+          // Second click within 250ms → double-click
           clearTimeout(this.clickTimer)
           this.clickTimer = null
           this.handleDoubleClick()
@@ -267,6 +279,7 @@ export class TrayManager {
   setLocale(locale: string): void {
     if (locale !== 'en' && locale !== 'zh') return
     this.locale = locale
+    this.rebuildMenu()
   }
 
   rebuildMenu(): void {
@@ -294,6 +307,7 @@ export class TrayManager {
   // ── Lifecycle ──
 
   destroy(): void {
+    delete (globalThis as any)[TRAY_INIT_GUARD]
     if (this.clickTimer) {
       clearTimeout(this.clickTimer)
       this.clickTimer = null

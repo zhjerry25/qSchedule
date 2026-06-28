@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { PopupHeader } from './PopupHeader'
 import { TodayTaskList } from './TodayTaskList'
+import { QuickAddInput } from '../todo/QuickAddInput'
 
 export function PopupApp() {
   const contentRef = useRef<HTMLDivElement>(null)
@@ -21,6 +22,7 @@ export function PopupApp() {
     <div className="flex flex-col h-screen bg-white">
       <PopupHeader />
       <div ref={contentRef} id="popup-content" className="flex-1 overflow-y-auto px-3 pb-3">
+        <QuickAddInput className="mb-2" />
         <TodayTaskList />
       </div>
     </div>

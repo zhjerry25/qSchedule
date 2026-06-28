@@ -50,17 +50,28 @@ export function isThisWeek(dateStr: string | null): boolean {
   return date >= monday && date <= sunday
 }
 
+// ── Smart Date Formatting ──
+
+export type SmartDate =
+  | { kind: 'today' }
+  | { kind: 'tomorrow' }
+  | { kind: 'yesterday' }
+  | { kind: 'date'; label: string }
+
 /**
- * Format a date string as smart relative display (Today/Tomorrow/Yesterday) or
- * a formatted date. Supports both date-only (YYYY-MM-DD) and full ISO strings.
+ * Parse a date string into a structured SmartDate discriminant.
+ * Callers use i18n to render "Today"/"今天" etc. — this function
+ * only classifies the date, never hardcodes English strings.
+ *
+ * Supports both date-only (YYYY-MM-DD) and full ISO strings.
  */
 export function formatSmartDate(
   dateStr: string | null,
   options?: { includeWeekday?: boolean },
-): string | null {
+): SmartDate | null {
   if (!dateStr) return null
   const date = new Date(dateStr.slice(0, 10) + 'T00:00:00')
-  if (isNaN(date.getTime())) return dateStr
+  if (isNaN(date.getTime())) return { kind: 'date', label: dateStr }
 
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -69,9 +80,9 @@ export function formatSmartDate(
     (target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
   )
 
-  if (diffDays === 0) return 'Today'
-  if (diffDays === 1) return 'Tomorrow'
-  if (diffDays === -1) return 'Yesterday'
+  if (diffDays === 0) return { kind: 'today' }
+  if (diffDays === 1) return { kind: 'tomorrow' }
+  if (diffDays === -1) return { kind: 'yesterday' }
 
   const localeOptions: Intl.DateTimeFormatOptions = {
     month: 'short',
@@ -80,7 +91,7 @@ export function formatSmartDate(
   if (options?.includeWeekday) {
     localeOptions.weekday = 'short'
   }
-  return date.toLocaleDateString('en-US', localeOptions)
+  return { kind: 'date', label: date.toLocaleDateString('en-US', localeOptions) }
 }
 
 /**
