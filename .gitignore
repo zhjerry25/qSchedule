@@ -4,3 +4,10 @@ CLAUDE.md
 README.md
 LICENSE
 MEMORY.md
+node_modules
+out/
+dist/
+.vite/
+*.db
+*.db-journal
+.DS_Store
