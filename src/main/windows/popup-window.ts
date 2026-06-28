@@ -37,7 +37,10 @@ export function createPopupWindow(callbacks: PopupWindowCallbacks): BrowserWindo
 
   // Load popup renderer
   if (process.env.ELECTRON_RENDERER_URL) {
-    win.loadURL(`${process.env.ELECTRON_RENDERER_URL}popup.html`)
+    // Use URL constructor to safely join base URL with path
+    // Handles both http://localhost:5173 and http://localhost:5173/
+    const url = new URL('popup.html', process.env.ELECTRON_RENDERER_URL).href
+    win.loadURL(url)
   } else {
     win.loadFile(join(__dirname, '../renderer/popup.html'))
   }

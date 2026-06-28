@@ -1,5 +1,6 @@
 import { getDatabase } from '../database/connection'
 import type { Tag } from '@shared/tag'
+import { randomUUID } from 'crypto'
 
 interface TagRow {
   id: string
@@ -36,7 +37,7 @@ export const tagRepository = {
 
   create(name: string, color: string): Tag {
     const db = getDatabase()
-    const id = crypto.randomUUID()
+    const id = randomUUID()
     const now = new Date().toISOString()
 
     db.prepare(

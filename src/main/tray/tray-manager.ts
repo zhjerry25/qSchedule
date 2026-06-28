@@ -265,7 +265,15 @@ export class TrayManager {
     }
     this.tray?.destroy()
     this.tray = null
+    // Force-close windows via destroy() — bypasses the 'close' handler
+    // that would otherwise prevent app quit (close handler does hide, not destroy)
+    if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+      this.mainWindow.destroy()
+    }
     this.mainWindow = null
+    if (this.popupWindow && !this.popupWindow.isDestroyed()) {
+      this.popupWindow.destroy()
+    }
     this.popupWindow = null
   }
 }

@@ -18,7 +18,9 @@ export function todayISO(): string {
  */
 export function isToday(dateStr: string | null): boolean {
   if (!dateStr) return false
-  return dateStr === todayISO()
+  // Extract date part (first 10 chars = YYYY-MM-DD) to handle
+  // both date-only strings and full ISO datetime strings from DB
+  return dateStr.slice(0, 10) === todayISO()
 }
 
 /**
@@ -28,7 +30,9 @@ export function isToday(dateStr: string | null): boolean {
 export function isThisWeek(dateStr: string | null): boolean {
   if (!dateStr) return false
 
-  const date = new Date(dateStr + 'T00:00:00')
+  // Extract date part to handle full ISO datetime strings from DB
+  const datePart = dateStr.slice(0, 10)
+  const date = new Date(datePart + 'T00:00:00')
   if (isNaN(date.getTime())) return false
 
   const today = new Date()

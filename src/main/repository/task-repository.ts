@@ -7,6 +7,7 @@ import type {
   UpdateTaskInput,
   TagBasic,
 } from '@shared/task'
+import { randomUUID } from 'crypto'
 
 // ── Row types (as stored in SQLite) ──
 
@@ -234,7 +235,7 @@ export const taskRepository = {
 
   create(input: CreateTaskInput): Task {
     const db = getDatabase()
-    const id = input.id ?? crypto.randomUUID()
+    const id = input.id ?? randomUUID()
     const now = new Date().toISOString()
 
     db.prepare(
