@@ -127,7 +127,7 @@ export class TrayManager {
   private mainWindow: BrowserWindow | null = null
   private popupWindow: BrowserWindow | null = null
   private clickTimer: ReturnType<typeof setTimeout> | null = null
-  private suppressPopupBlur = false
+  private blurSequence = 0
 
   constructor(
     private createMainWin: (callbacks: MainWindowCallbacks) => BrowserWindow,
@@ -144,40 +144,43 @@ export class TrayManager {
       },
     })
 
-    // Create tray icon
-    this.tray = new Tray(createTrayIcon())
-    this.tray.setToolTip('Time Planner')
+    // Create tray icon — failure is non-fatal; app continues with main window
+    try {
+      this.tray = new Tray(createTrayIcon())
+      this.tray.setToolTip('Time Planner')
 
-    // Tray click: single vs double-click detection via 300ms timer
-    this.tray.on('click', (_event, bounds) => {
-      if (this.clickTimer) {
-        // Second click within 300ms → double-click
-        clearTimeout(this.clickTimer)
-        this.clickTimer = null
-        this.handleDoubleClick()
-      } else {
-        // First click → wait to see if a second click follows
-        this.clickTimer = setTimeout(() => {
+      // Tray click: single vs double-click detection via 300ms timer
+      this.tray.on('click', (_event, bounds) => {
+        if (this.clickTimer) {
+          // Second click within 300ms → double-click
+          clearTimeout(this.clickTimer)
           this.clickTimer = null
-          this.handleSingleClick(bounds)
-        }, CLICK_INTERVAL_MS)
-      }
-    })
+          this.handleDoubleClick()
+        } else {
+          // First click → wait to see if a second click follows
+          this.clickTimer = setTimeout(() => {
+            this.clickTimer = null
+            this.handleSingleClick(bounds)
+          }, CLICK_INTERVAL_MS)
+        }
+      })
 
-    // Right-click context menu
-    this.tray.on('right-click', () => {
-      this.tray?.popUpContextMenu(this.buildContextMenu())
-    })
-
-    // Re-create tray if it disappears (e.g. after Explorer restart on Windows)
-    // Not typically needed on macOS but harmless to keep.
+      // Right-click context menu
+      this.tray.on('right-click', () => {
+        this.tray?.popUpContextMenu(this.buildContextMenu())
+      })
+    } catch (err) {
+      console.error('Failed to create tray icon:', err)
+      // App continues with main window only — tray operations are no-ops
+      this.tray = null
+    }
   }
 
   // ── Window Management ──
 
   showMainWindow(): void {
-    this.suppressPopupBlur = true
-    if (this.mainWindow) {
+    this.blurSequence += 1
+    if (this.mainWindow && !this.mainWindow.isDestroyed()) {
       this.mainWindow.show()
       this.mainWindow.focus()
     }
@@ -201,12 +204,13 @@ export class TrayManager {
     if (!this.popupWindow || this.popupWindow.isDestroyed()) {
       this.popupWindow = this.createPopupWin({
         onBlur: () => {
-          // Delay to allow suppressPopupBlur flag to be checked
+          // Capture the sequence at blur time; only hide if no suppression
+          // was active when the blur event fired (snapshot semantics).
+          const seq = this.blurSequence
           setTimeout(() => {
-            if (!this.suppressPopupBlur && this.popupWindow && !this.popupWindow.isDestroyed()) {
+            if (seq === 0 && this.popupWindow && !this.popupWindow.isDestroyed()) {
               this.popupWindow.hide()
             }
-            this.suppressPopupBlur = false
           }, 100)
         },
       })
@@ -214,16 +218,6 @@ export class TrayManager {
 
     positionPopupNearTray(this.popupWindow, bounds)
     this.popupWindow.show()
-  }
-
-  // ── Blur Suppression (for "Open App" flow) ──
-
-  isPopupBlurSuppressed(): boolean {
-    return this.suppressPopupBlur
-  }
-
-  resetPopupBlurSuppress(): void {
-    this.suppressPopupBlur = false
   }
 
   // ── Tray Click Handlers ──

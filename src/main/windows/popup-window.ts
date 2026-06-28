@@ -26,7 +26,7 @@ export function createPopupWindow(callbacks: PopupWindowCallbacks): BrowserWindo
     hasShadow: true,
     type: 'panel',
     webPreferences: {
-      preload: join(__dirname, '../../preload/index.js'),
+      preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
     },
   })
@@ -39,7 +39,7 @@ export function createPopupWindow(callbacks: PopupWindowCallbacks): BrowserWindo
   if (process.env.ELECTRON_RENDERER_URL) {
     win.loadURL(`${process.env.ELECTRON_RENDERER_URL}popup.html`)
   } else {
-    win.loadFile(join(__dirname, '../../renderer/popup.html'))
+    win.loadFile(join(__dirname, '../renderer/popup.html'))
   }
 
   return win

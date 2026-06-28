@@ -12,28 +12,14 @@ app.whenReady().then(() => {
   // Initialize database and run migrations
   runMigrations()
 
-  // Create the tray manager — owns all window lifecycle
+  // Create the tray manager — owns all window lifecycle.
+  // Factories forward TrayManager's callbacks to the window creators.
   trayManager = new TrayManager(
-    () =>
-      createMainWindow({
-        onClosePrevented: () => {
-          // Main window was closed → hidden to tray. Nothing extra needed.
-        },
-      }),
-    () =>
-      createPopupWindow({
-        onBlur: () => {
-          setTimeout(() => {
-            if (trayManager && !trayManager.isPopupBlurSuppressed()) {
-              trayManager.hidePopup()
-            }
-            trayManager?.resetPopupBlurSuppress()
-          }, 100)
-        },
-      }),
+    (callbacks) => createMainWindow(callbacks),
+    (callbacks) => createPopupWindow(callbacks),
   )
 
-  // Register all IPC handlers (task + tag + window + ping)
+  // Register all IPC handlers (task + tag + window)
   registerIpcHandlers(trayManager)
 
   // Initialize tray + create main window
@@ -43,6 +29,14 @@ app.whenReady().then(() => {
   app.on('activate', () => {
     trayManager?.showMainWindow()
   })
+}).catch((err) => {
+  console.error('Fatal: app startup failed:', err)
+  const { dialog } = require('electron')
+  dialog.showErrorBox(
+    'Startup Failed',
+    `The application failed to start:\n\n${err instanceof Error ? err.message : String(err)}\n\nPlease check the logs and restart.`,
+  )
+  app.quit()
 })
 
 app.on('window-all-closed', () => {

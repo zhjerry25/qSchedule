@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { TodoCheckbox } from './TodoCheckbox'
 import { FrequencyBadge } from './FrequencyBadge'
 import { TagList } from '../tags/TagList'
-import { useCompleteTask } from '../../hooks/useCompleteTask'
 import type { TaskWithTags } from '@shared/task'
 
 interface TodoCardProps {
   task: TaskWithTags
   onEdit: (task: TaskWithTags) => void
   onDelete: (task: TaskWithTags) => void
+  onToggleComplete: (task: TaskWithTags) => void
+  isCompleting: boolean
 }
 
 function formatDate(dateStr: string | null): string | null {
@@ -33,9 +34,8 @@ function formatDate(dateStr: string | null): string | null {
   })
 }
 
-export function TodoCard({ task, onEdit, onDelete }: TodoCardProps) {
+export function TodoCard({ task, onEdit, onDelete, onToggleComplete, isCompleting }: TodoCardProps) {
   const [isDeleting, setIsDeleting] = useState(false)
-  const { toggleComplete, isPending } = useCompleteTask()
 
   const dateDisplay = formatDate(task.scheduled_date ?? task.deadline)
   const dateLabel = task.frequency === 'deadline' && dateDisplay
@@ -55,8 +55,8 @@ export function TodoCard({ task, onEdit, onDelete }: TodoCardProps) {
         <TodoCheckbox
           checked={task.completed}
           frequency={task.frequency}
-          onChange={() => toggleComplete(task)}
-          disabled={isPending}
+          onChange={() => onToggleComplete(task)}
+          disabled={isCompleting}
         />
 
         {/* Content */}

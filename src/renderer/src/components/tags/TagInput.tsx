@@ -31,8 +31,21 @@ export function TagInput({
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
+  // ── Refs for stable handleKeyDown dependencies ──
+  const trimmedRef = useRef('')
+  trimmedRef.current = inputValue.trim()
+
+  const valueRef = useRef(value)
+  valueRef.current = value
+
+  const existingTagsRef = useRef(existingTags)
+  existingTagsRef.current = existingTags
+
+  const inputValueRef = useRef('')
+  inputValueRef.current = inputValue
+
   // ── Derived ──
-  const trimmed = inputValue.trim()
+  const trimmed = trimmedRef.current
   const suggestions = trimmed
     ? existingTags.filter(
         (t) =>
@@ -96,22 +109,25 @@ export function TagInput({
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') {
         e.preventDefault()
-        if (!trimmed) return
+        const currentTrimmed = trimmedRef.current
+        if (!currentTrimmed) return
 
         // Prefer exact match over creating a new tag
-        const match = existingTags.find(
-          (t) => t.name.toLowerCase() === trimmed.toLowerCase(),
+        const currentTags = existingTagsRef.current
+        const currentValue = valueRef.current
+        const match = currentTags.find(
+          (t) => t.name.toLowerCase() === currentTrimmed.toLowerCase(),
         )
-        if (match && !value.some((vt) => vt.id === match.id)) {
+        if (match && !currentValue.some((vt) => vt.id === match.id)) {
           addTag(match)
         } else if (!match) {
           handleCreateNew()
         }
-      } else if (e.key === 'Backspace' && inputValue === '') {
+      } else if (e.key === 'Backspace' && inputValueRef.current === '') {
         removeLastTag()
       }
     },
-    [trimmed, existingTags, value, addTag, handleCreateNew, inputValue, removeLastTag],
+    [addTag, handleCreateNew, removeLastTag],
   )
 
   const handleBlur = useCallback(() => {

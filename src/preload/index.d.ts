@@ -37,7 +37,6 @@ export interface IpcApi {
     openMain(): Promise<IpcResult<void>>
     closePopup(): Promise<IpcResult<void>>
   }
-  ping(): Promise<string>
 }
 
 declare global {

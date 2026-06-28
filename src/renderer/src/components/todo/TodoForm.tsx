@@ -30,7 +30,9 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
 
   // Load existing tags when editing a task
   const { data: existingTags = [] } = useQuery({
-    queryKey: ['tags', 'for-task', task?.id],
+    queryKey: task?.id
+      ? (['tags', 'for-task', task.id] as const)
+      : (['tags', 'for-task'] as const),
     queryFn: () => tagApi.getForTask(task!.id),
     enabled: isEdit && open,
   })
@@ -42,6 +44,7 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
   const [deadlineDate, setDeadlineDate] = useState<string | null>(null)
   const [description, setDescription] = useState('')
   const [selectedTags, setSelectedTags] = useState<Tag[]>([])
+  const [tagError, setTagError] = useState<string | null>(null)
 
   // ── Reset form on open / task change ──
   useEffect(() => {
@@ -52,6 +55,7 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
       setDeadlineDate(task?.deadline ?? null)
       setDescription(task?.description ?? '')
       setSelectedTags([])
+      setTagError(null)
     }
   }, [open, task])
 
@@ -110,7 +114,13 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
           },
         })
         // Diff and sync tags
-        await syncTags(task!.id, existingTags, selectedTags)
+        try {
+          await syncTags(task!.id, existingTags, selectedTags)
+        } catch (err) {
+          setTagError(
+            `Tags could not be synced: ${err instanceof Error ? err.message : 'Unknown error'}. Task was saved.`,
+          )
+        }
       } else {
         const newTask = await createTask.mutateAsync({
           id: crypto.randomUUID(),
@@ -123,8 +133,14 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
           deadline: frequency === 'deadline' ? deadlineDate : null,
         })
         // Assign all selected tags to the new task
-        for (const tag of selectedTags) {
-          await tagApi.addToTask(newTask.id, tag.id)
+        try {
+          for (const tag of selectedTags) {
+            await tagApi.addToTask(newTask.id, tag.id)
+          }
+        } catch (err) {
+          setTagError(
+            `Tags could not be assigned: ${err instanceof Error ? err.message : 'Unknown error'}. Task was saved.`,
+          )
         }
       }
 
@@ -133,7 +149,6 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
       onOpenChange(false)
     } catch {
       // Task-level mutation errors are surfaced via mutation.error below.
-      // Tag sync errors are silently handled — the task data is already saved.
     }
   }
 
@@ -243,6 +258,13 @@ export function TodoForm({ open, onOpenChange, task }: TodoFormProps) {
             {mutationError && (
               <p className="text-sm text-rose-500 bg-rose-50 px-3 py-2 rounded-smooth">
                 {mutationError}
+              </p>
+            )}
+
+            {/* Tag sync warning */}
+            {tagError && (
+              <p className="text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-smooth">
+                {tagError}
               </p>
             )}
           </div>

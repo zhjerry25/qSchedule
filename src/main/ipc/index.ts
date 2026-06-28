@@ -10,9 +10,6 @@ export function registerIpcHandlers(trayManager: TrayManager): void {
   if (registered) return
   registered = true
 
-  // Legacy ping (kept for Phase 1 verification)
-  ipcMain.handle('ping', () => 'pong')
-
   registerTaskHandlers()
   registerTagHandlers()
   registerWindowHandlers(trayManager)

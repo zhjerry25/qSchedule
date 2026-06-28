@@ -7,8 +7,15 @@ import type { TaskWithTags } from '@shared/task'
 
 // ── Compact Task Row ──
 
-function CompactTodoCard({ task }: { task: TaskWithTags }) {
-  const { toggleComplete, isPending } = useCompleteTask()
+function CompactTodoCard({
+  task,
+  onToggleComplete,
+  isCompleting,
+}: {
+  task: TaskWithTags
+  onToggleComplete: (task: TaskWithTags) => void
+  isCompleting: boolean
+}) {
 
   return (
     <div
@@ -21,8 +28,8 @@ function CompactTodoCard({ task }: { task: TaskWithTags }) {
       <TodoCheckbox
         checked={task.completed}
         frequency={task.frequency}
-        onChange={() => toggleComplete(task)}
-        disabled={isPending}
+        onChange={() => onToggleComplete(task)}
+        disabled={isCompleting}
       />
       <span
         className={[
@@ -84,6 +91,7 @@ function ErrorMessage() {
 
 export function TodayTaskList() {
   const { tasks, isLoading, isError } = useTodayTasks()
+  const { toggleComplete, isPending: isCompleting } = useCompleteTask()
 
   if (isLoading) return <LoadingSkeleton />
   if (isError) return <ErrorMessage />
@@ -92,7 +100,12 @@ export function TodayTaskList() {
   return (
     <div className="flex flex-col gap-0.5 mt-1">
       {tasks.map((task) => (
-        <CompactTodoCard key={task.id} task={task} />
+        <CompactTodoCard
+          key={task.id}
+          task={task}
+          onToggleComplete={toggleComplete}
+          isCompleting={isCompleting}
+        />
       ))}
     </div>
   )

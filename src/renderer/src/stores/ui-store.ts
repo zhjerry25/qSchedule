@@ -1,12 +1,7 @@
 import { create } from 'zustand'
-import type { View } from '../lib/constants'
 
 interface UIState {
-  // ── Navigation ──
-  activeView: View
-  setActiveView: (view: View) => void
-
-  // ── Tag Filter (Phase 5) ──
+  // ── Tag Filter ──
   selectedTagIds: string[]
   toggleTagFilter: (tagId: string) => void
   clearTagFilters: () => void
@@ -23,10 +18,6 @@ interface UIState {
 }
 
 export const useUIStore = create<UIState>((set) => ({
-  // Navigation
-  activeView: 'today',
-  setActiveView: (view) => set({ activeView: view }),
-
   // Tag filter
   selectedTagIds: [],
   toggleTagFilter: (tagId) =>

@@ -45,6 +45,18 @@ interface TaskTagRow {
 
 // ── Helpers ──
 
+/**
+ * Format a Date as YYYY-MM-DD in local timezone.
+ * Defaults to today if no argument is provided.
+ */
+function localDateISO(date?: Date): string {
+  const d = date ?? new Date()
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
 function rowToTask(row: TaskRow): Task {
   return {
     id: row.id,
@@ -160,7 +172,7 @@ export const taskRepository = {
     }
 
     if (filter.view === 'today') {
-      const today = new Date().toISOString().slice(0, 10)
+      const today = localDateISO()
       // Include tasks scheduled for today AND daily tasks (always due today)
       conditions.push('(scheduled_date = ? OR frequency = ?)')
       params.push(today)
@@ -176,8 +188,8 @@ export const taskRepository = {
       conditions.push(
         '((scheduled_date >= ? AND scheduled_date <= ?) OR frequency = ?)',
       )
-      params.push(monday.toISOString().slice(0, 10))
-      params.push(sunday.toISOString().slice(0, 10))
+      params.push(localDateISO(monday))
+      params.push(localDateISO(sunday))
       params.push('weekly')
     }
 
@@ -302,7 +314,10 @@ export const taskRepository = {
 
   remove(id: string): void {
     const db = getDatabase()
-    db.prepare('DELETE FROM tasks WHERE id = ?').run(id)
+    const result = db.prepare('DELETE FROM tasks WHERE id = ?').run(id)
+    if (result.changes === 0) {
+      throw new Error(`Task not found: ${id}`)
+    }
   },
 
   complete(id: string): Task {
@@ -339,11 +354,15 @@ export const taskRepository = {
     const db = getDatabase()
     const now = new Date().toISOString()
 
-    db.prepare(
+    const result = db.prepare(
       `UPDATE tasks
        SET completed = 0, completed_at = NULL, updated_at = ?
        WHERE id = ?`,
     ).run(now, id)
+
+    if (result.changes === 0) {
+      throw new Error(`Task not found: ${id}`)
+    }
 
     return rowToTask(
       db.prepare('SELECT * FROM tasks WHERE id = ?').get(id) as TaskRow,
@@ -352,18 +371,30 @@ export const taskRepository = {
 
   getTodayTasks(): TaskWithTags[] {
     const db = getDatabase()
-    const today = new Date().toISOString().slice(0, 10)
+    const today = localDateISO()
 
-    // Tasks scheduled for today, OR incomplete recurring tasks
-    // (dynamic reset happens in renderer — we just return the raw data)
+    // Aligned with partitionTasks().today logic (see date-utils.ts):
+    // - All daily tasks (regardless of completed — renderer handles dynamic reset)
+    // - Incomplete once/deadline tasks due today or overdue
+    // - Weekly tasks excluded (they belong in the Week section)
     const rows = db
       .prepare(
         `SELECT * FROM tasks
-         WHERE scheduled_date = ?
-            OR (completed = 0 AND frequency IN ('daily', 'weekly'))
+         WHERE kind = 'todo'
+           AND (
+             frequency = 'daily'
+             OR (
+               frequency IN ('once', 'deadline')
+               AND completed = 0
+               AND (
+                 scheduled_date <= ?
+                 OR (scheduled_date IS NULL AND deadline <= ?)
+               )
+             )
+           )
          ORDER BY sort_order ASC, created_at DESC`,
       )
-      .all(today) as TaskRow[]
+      .all(today, today) as TaskRow[]
 
     const tasks = rows.map(rowToTask)
     const taskIds = tasks.map((t) => t.id)

@@ -18,7 +18,7 @@ export function createMainWindow(callbacks: MainWindowCallbacks): BrowserWindow 
     show: false,
     titleBarStyle: 'hiddenInset',
     webPreferences: {
-      preload: join(__dirname, '../../preload/index.js'),
+      preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
     },
   })
@@ -37,7 +37,7 @@ export function createMainWindow(callbacks: MainWindowCallbacks): BrowserWindow 
   if (process.env.ELECTRON_RENDERER_URL) {
     win.loadURL(process.env.ELECTRON_RENDERER_URL)
   } else {
-    win.loadFile(join(__dirname, '../../renderer/index.html'))
+    win.loadFile(join(__dirname, '../renderer/index.html'))
   }
 
   return win

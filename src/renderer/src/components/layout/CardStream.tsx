@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useUIStore } from '../../stores/ui-store'
 import { useTasks } from '../../hooks/useTasks'
 import { useTaskMutations } from '../../hooks/useTaskMutations'
+import { useCompleteTask } from '../../hooks/useCompleteTask'
 import {
   SECTION_LABELS,
   SECTION_EMPTY_TITLES,
@@ -22,6 +23,7 @@ export function CardStream() {
 
   const { tasks, isLoading, isError, error } = useTasks(selectedTagIds)
   const { deleteTask } = useTaskMutations()
+  const { toggleComplete, isPending: isCompleting } = useCompleteTask()
 
   // ── Local UI state ──
   const [editingTask, setEditingTask] = useState<TaskWithTags | null>(null)
@@ -98,6 +100,8 @@ export function CardStream() {
                     task={task}
                     onEdit={setEditingTask}
                     onDelete={setDeletingTask}
+                    onToggleComplete={toggleComplete}
+                    isCompleting={isCompleting}
                   />
                 ))}
               </div>
